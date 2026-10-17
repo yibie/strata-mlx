@@ -1,0 +1,2 @@
+# Preserve raw synthetic evidence bytes, including original diagnostic whitespace.
+bench/results/e55-m5pro-20261017/** -whitespace

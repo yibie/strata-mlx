@@ -1,0 +1,22 @@
+load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks
+load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024
+load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842
+
+strata-vision: model files loaded in 0.4 s
+strata-vision: warmed up at 1024 image tokens in 0.8 s
+[strata] 2026-10-17 09:27:22 engine started: /Users/jakecantrell/inference-lab/contributions/strata-vision-20261017/mlx-vision --serve --native /Users/jakecantrell/inference-lab/models/uncensored-gsq-iq3/eec4e10a2c29/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf --mtp /Users/jakecantrell/inference-lab/models/strata-mlx-mtp --expert-memory resident --vision --max-context 16384 --fusion-limit 6 --conversation-cache-mib 512 --conversation-cache-min-tokens 0 --expert-profile off --keep-awake 2
+strata-mlx: the Q6_K layers' weights as floats do not fit beside the model; they are made anew for each chunk of a prompt, which reads prompts about a tenth slower
+strata-mlx: session is up in 22 s, 46.0 GiB of weights
+strata-mlx: conversation cache: parked 437 tokens (347 MiB) in 0.1 ms; parked=1 bytes=363415252 evictions=0
+strata-mlx: conversation cache: parked 437 tokens (347 MiB) in 0.1 ms; parked=1 bytes=363415252 evictions=1
+strata-mlx: conversation cache: parked 553 tokens (353 MiB) in 0.1 ms; parked=1 bytes=370231460 evictions=2
+strata-mlx: conversation cache: parked 437 tokens (347 MiB) in 0.1 ms; parked=1 bytes=363415252 evictions=3
+strata-mlx: conversation cache: parked 437 tokens (347 MiB) in 0.1 ms; parked=1 bytes=363415252 evictions=4
+strata-mlx: conversation cache: parked 553 tokens (353 MiB) in 0.0 ms; parked=1 bytes=370231460 evictions=5
+strata-mlx: conversation cache: parked 437 tokens (347 MiB) in 0.0 ms; parked=1 bytes=363415252 evictions=6
+strata-mlx: conversation cache: parked 17 tokens (340 MiB) in 0.0 ms; parked=1 bytes=356597828 evictions=7
+strata-mlx: conversation cache: parked 437 tokens (352 MiB) in 0.0 ms; parked=1 bytes=369478868 evictions=8
+strata-mlx: conversation cache: parked 445 tokens (347 MiB) in 0.0 ms; parked=1 bytes=363415284 evictions=9
+strata-mlx: conversation cache: parked 437 tokens (352 MiB) in 0.1 ms; parked=1 bytes=369478868 evictions=10
+strata-mlx: conversation cache: parked 875 tokens (360 MiB) in 0.0 ms; parked=1 bytes=377048492 evictions=10
+strata-mlx: conversation cache: parked 469 tokens (462 MiB) in 0.0 ms; parked=1 bytes=484937044 evictions=11

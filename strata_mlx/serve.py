@@ -138,10 +138,11 @@ class Session:
     """One conversation slot: turns protocol lines into engine calls and writes the answers."""
 
     def __init__(self, engine: Engine, write, max_context: int, stop: threading.Event | None = None,
-                 parked: Parked | None = None):
+                 parked: Parked | None = None, vision: bool = False):
         self.engine, self.write, self.max_context, self.parked = engine, write, max_context, parked
         self.stop = stop or threading.Event()
         self.ran = False
+        self.vision = vision
 
     def handle(self, line: str) -> bool:
         """One line; whether the model ran for it (a DONE was written)."""
@@ -153,7 +154,10 @@ class Session:
         if line.startswith("GEN "):
             self.gen(line[4:])
         elif line.startswith("GENI "):
-            self.write("ERR this engine was started without --vision")
+            if self.vision:
+                self.gen(line[5:], image=True)
+            else:
+                self.write("ERR this engine was started without --vision")
         elif line.startswith(("SAVE ", "RESTORE ")):
             self.session_file(*line.split(" ", 1))
         elif line.startswith("VRAM"):
@@ -183,11 +187,11 @@ class Session:
             done = "SAVED" if command == "SAVE" else "RESTORED"
             self.write(f"{done} {len(e.tokens)} {size} {(time.perf_counter() - t0) * 1e3:.1f}")
 
-    def gen(self, rest: str):
+    def gen(self, rest: str, image: bool = False):
         try:
             fields = rest.split()
             max_new, options, marks = int(fields[0]), {}, {"ckpt": 1, "pin": 0}
-            for f in fields[1:-1]:
+            for f in fields[1:-2] if image else fields[1:-1]:
                 key, _, value = f.partition("=")
                 if key in _CHECKPOINTS:
                     marks[key] = int(value)
@@ -195,6 +199,8 @@ class Session:
                     options[key] = float(value)
                 elif key in _INTS:
                     options[key] = int(value)
+                elif key == "img_keys" and image:
+                    pass  # identity is computed from the actual rows, never client-supplied hashes
                 elif key not in _IGNORED:
                     raise ValueError(key)
             prompt = [int(t) for t in fields[-1].split(",")]
@@ -208,11 +214,20 @@ class Session:
             self.write(f"ERR the prompt ({len(prompt)} tokens) exceeds the context ({self.max_context})")
             return
 
+        vision = None
+        if image:
+            from .vision import Vision
+            try:
+                vision = Vision.load(fields[-2], prompt, self.engine.m.args.hidden_size)
+            except (ValueError, OSError) as err:
+                self.write("ERR " + " ".join(str(err).split()))
+                return
         e = self.engine
         e.sampling = Sampling(**options)
         t0 = time.perf_counter()
         keep, pin = marks["ckpt"] != 0, marks["pin"]
-        reused = resume(e, self.parked, prompt)
+        reused = resume(e, self.parked, prompt, vision.key if vision else None)
+        e.vision = vision
         self.write(f"RESUME {reused}")
         e.stats = Stats()
 
@@ -301,7 +316,10 @@ def _options(argv: list) -> dict:
     out, skipped, i = dict(known), [], 0
     while i < len(argv):
         a = argv[i]
-        if a in known:
+        if a == "--vision":
+            out[a] = True
+            i += 1
+        elif a in known:
             if i + 1 >= len(argv) or argv[i + 1].startswith("--"):
                 raise ValueError(f"{a} requires a value")
             out[a] = argv[i + 1]
@@ -355,7 +373,8 @@ def main():
     # parked conversations are memory the experts cannot have: the machine is that much smaller for them
     parked = Parked(int(opts["--conversation-cache-mib"]) << 20, int(opts["--conversation-cache-slots"]),
                     int(opts["--conversation-cache-min-tokens"]))
-    machine -= parked.budget
+    vision_reserve = (512 << 20) if opts.get("--vision") else 0
+    machine -= parked.budget + vision_reserve
     wanted = opts["--expert-memory"]
     # `available` (#6): what this machine has free or in its file cache, before the model's own files are read
     at_start = available_memory() if wanted == "available" and not opts["--machine-memory"] else None
@@ -460,8 +479,8 @@ def main():
         commands.put("QUIT")
 
     threading.Thread(target=reader, daemon=True).start()
-    session = Session(engine, write, max_context, stop, parked)
-    write(f"INFO engine={VERSION}-mlx backend=mlx mlx={mx.__version__} context={max_context} "
+    session = Session(engine, write, max_context, stop, parked, vision=opts.get("--vision", False))
+    write(f"INFO engine={VERSION}-mlx backend=mlx vision={int(session.vision)} mlx={mx.__version__} context={max_context} "
           f"floats={opts['--dtype']} drafts={engine.drafts} lookup={int(engine.lookup is not None)} "
           f"guess_rows={int(engine.rows is not None)} fusion_limit={engine.fuse_upto}"
           + (f" conversation_cache_mib={parked.budget >> 20} conversation_cache_slots={parked.slots}"

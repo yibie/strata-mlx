@@ -1,0 +1,15 @@
+loading the vision encoder ...
+loading the model (the first start takes a minute or two) ...
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/serve/server.py", line 6976, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/serve/server.py", line 6753, in main
+    engine = StrataEngine(exe, engine_args(cfg) + (effort_end or []), cwd=cfg.get("cwd"), log=cfg.get("log"),
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/serve/server.py", line 889, in __init__
+    raise EngineDied(why + (f" (see {log})" if log else "") + note +
+EngineDied: the engine exited before it was ready
+the engine process ended: exit code 1

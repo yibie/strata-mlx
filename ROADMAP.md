@@ -993,3 +993,7 @@ enough to choose 8. Merged with `--fusion-limit 6|8` to set it by hand; the engi
 two M5s do not say what else to choose by. Pull request 9's switches were faster at every size there too, 1.4-4.8 ms
 a pass. With it a script for the comparison, `bench/experiments/e54_shared_weight_controls.py`, and
 `bench/compare_results.py`, which summarizes a run only when every planned sample is in it.
+
+## Experimental image receiver
+
+Opt-in GENI/SVE1 input implemented locally using official encoder/HTTP handling. See docs/VISION.md; bounded synthetic image/reuse/cancellation qualification completed in the separate local resident integration (e55); broad vision/production qualification remains open. No production promotion.

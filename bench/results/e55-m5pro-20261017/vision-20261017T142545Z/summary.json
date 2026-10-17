@@ -1,0 +1,43 @@
+{
+  "source_changes": {
+    "integration": "zmuonvlz",
+    "upstream": "zpxxwxso",
+    "base": "1fca8253df55decab9d0bfa803bc34525fe402da"
+  },
+  "full_tests": {
+    "integration": 548,
+    "integration_subtests": 22,
+    "upstream": 500
+  },
+  "image_content_pass": 12,
+  "image_strict_pass": 10,
+  "image_count": 12,
+  "reuse_checks": [
+    {
+      "case": "image-reuse-prime",
+      "cached_tokens": 0,
+      "pass": true,
+      "wall_s": 0.8678870410076343
+    },
+    {
+      "case": "image-reuse-live",
+      "cached_tokens": 430,
+      "pass": true,
+      "wall_s": 0.12889070900564548
+    },
+    {
+      "case": "image-reuse-parked",
+      "cached_tokens": 430,
+      "pass": true,
+      "wall_s": 0.1306580000091344
+    }
+  ],
+  "follow_up_cached_tokens": 437,
+  "native_cancel_frames": [
+    "DONE 8 435 798.5 151.3 cancel 7 9 0 0 0 0 0 0.0 435 0"
+  ],
+  "memory_samples": 37,
+  "new_system_swapout_bytes": 0,
+  "restoration": "passed",
+  "final_utc": "2026-10-17T14:28:16Z"
+}

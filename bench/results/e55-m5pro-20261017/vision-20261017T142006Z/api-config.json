@@ -1,0 +1,38 @@
+{
+  "exe": "/Users/jakecantrell/inference-lab/contributions/strata-vision-20261017/mlx-vision",
+  "log": "/Users/jakecantrell/inference-lab/contributions/strata-20261012/results/vision-20261017T142006Z/synthetic-engine.log",
+  "args": [
+    "--native",
+    "/Users/jakecantrell/inference-lab/models/uncensored-gsq-iq3/eec4e10a2c29/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf",
+    "--mtp",
+    "/Users/jakecantrell/inference-lab/models/strata-mlx-mtp",
+    "--expert-memory",
+    "resident",
+    "--vision",
+    "--max-context",
+    "16384",
+    "--fusion-limit",
+    "6",
+    "--conversation-cache-mib",
+    "1024",
+    "--conversation-cache-min-tokens",
+    "0",
+    "--expert-profile",
+    "off",
+    "--keep-awake",
+    "2"
+  ],
+  "cwd": "/Users/jakecantrell/inference-lab/contributions/strata-vision-20261017/source",
+  "tokenizer": "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/comparison-pack/tokenizer",
+  "model_name": "flash-next-uncensored",
+  "env": {
+    "MTL_DEBUG_LAYER": "0"
+  },
+  "vision": {
+    "exe": "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/build-vision/bin/strata-vision",
+    "gpu": true,
+    "max_tokens": 1024,
+    "model": "/Users/jakecantrell/inference-lab/models/uncensored-gsq-iq3/eec4e10a2c29/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf",
+    "mmproj": "/Users/jakecantrell/inference-lab/models/uncensored-flash-vision/eec4e10a2c29/mmproj-Qwen3.8-Flash-Next-BF16.gguf"
+  }
+}

@@ -26,6 +26,8 @@ hands; a prompt that continues it takes it back.
 - costs → [[memory-rule]]: its budget comes out of the machine's memory before the experts' share is worked out; a conversation of 10,038 tokens was 732 MiB [yumvopms]
 - depends-on → [[exactness]]: in float32 the same answers with and without parking; in float16 three of nine requests parted, a turn that goes on from a state against one that reads the conversation again [yumvopms]
 
+- depends-on → [[image-understanding]]: image-bearing state is reusable only with matching positions, grids and embedding hashes [ROADMAP: Experimental image receiver]
+
 ## What we know
 
 | request | without | 4,096 MiB of parking |
@@ -40,3 +42,5 @@ hands; a prompt that continues it takes it back.
 
 - Strata's floor of free memory below which nothing is parked, which wants the reading of free memory of
   [[available-memory]]. Parked conversations on the SSD, to outlast a restart.
+
+- Synthetic full-model image/API validation and one-entry image-cache eviction regression are recorded separately from upstream-only tiny-model tests. [e55]

@@ -1,0 +1,29 @@
+loading the vision encoder ...
+loading the model (the first start takes a minute or two) ...
+[strata] starting the engine: reading the model's weights ...
+[strata] still starting (20 s) - please wait ...
+ready: http://127.0.0.1:12346/v1  (OpenAI: /v1/chat/completions, Anthropic: /v1/messages, context 16384 tokens, images on)
+       open http://127.0.0.1:12346/ in a browser to chat; close this window to stop the model
+[strata] done: 7 tokens in 1 s (52.5 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 1 s (75.3 tok/s) (stop, cancel=False)
+[strata] answering: 2 of max 128 tokens, 28.2 tok/s, 1 s
+[strata] done: 18 tokens in 1 s (72.6 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 1 s (70.1 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 1 s (72.9 tok/s) (stop, cancel=False)
+[strata] answering: 6 of max 128 tokens, 63.8 tok/s, 1 s
+[strata] done: 18 tokens in 1 s (75.8 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 1 s (73.0 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 0 s (74.4 tok/s) (stop, cancel=False)
+[strata] done: 2 tokens in 0 s (35.3 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 0 s (73.8 tok/s) (stop, cancel=False)
+[strata] done: 6 tokens in 1 s (39.7 tok/s) (disconnect, cancel=True)
+[strata] done: 7 tokens in 0 s (74.7 tok/s) (stop, cancel=False)
+[strata] reading the prompt: 839 of 846 tokens, 1 s so far
+[strata] done: 30 tokens in 2 s (70.8 tok/s) (stop, cancel=False)
+[strata] done: 7 tokens in 0 s (72.9 tok/s) (stop, cancel=False)
+[strata] done: 2 tokens in 0 s (41.6 tok/s) (stop, cancel=False)
+[strata] 400 invalid request: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+[strata] done: 2 tokens in 0 s (41.7 tok/s) (stop, cancel=False)
+
+[strata] stopping (Ctrl+C again to end the engine at once) ...
+[strata] stopped

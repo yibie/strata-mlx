@@ -50,3 +50,9 @@
 - 2026-10-14 · [skkpzrnm] · started as a pilot: "Writing answers", eleven concepts, three
   experiments (e43-e45) drawn from ROADMAP.md, pull requests 9 and 10, and [skxmzozu] [wykuvxvr] [tmyqkuqv]
   [zryukqou]; the checker and the graph.
+
+- [zpxxwxso] Implement opt-in SVE1/GENI receiver, image positions, shifted draft inputs and image-key RAM parking; preserve official MIT attribution. Tests and bounded real-model integration recorded separately.
+
+- [zpxxwxso] [e55] Final548+22/500 Mac tests;12/12 synthetic image contents (10 strict),430-token live/parked reuse,437-token follow-up, HTTP cancel/recovery,zero new system swapouts across37 samples. Preserve failed graph/admission/eviction attempts and original service restoration evidence.
+
+- [zpxxwxso] Rebase image receiving onto main295c965 after PR11 merged; preserve upstream fusion and pressure-following options together with --vision, combine roadmap records and regenerate the knowledge graph. No model/performance claim changes.

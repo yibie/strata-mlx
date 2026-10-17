@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/jakecantrell/inference-lab/contributions/strata-vision-20261017/probe_vision_api.py", line 56, in <module>
+    if proc.poll() is not None: raise RuntimeError('Official API exited: ' + str(proc.returncode))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Official API exited: 1

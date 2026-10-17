@@ -1,0 +1,7 @@
+load_hparams: Qwen-VL models require at minimum 1024 image tokens to function correctly on grounding tasks
+load_hparams: if you encounter problems with accuracy, try adding --image-min-tokens 1024
+load_hparams: more info: https://github.com/ggml-org/llama.cpp/issues/16842
+
+strata-vision: model files loaded in 0.4 s
+strata-vision: warmed up at 1024 image tokens in 0.8 s
+[strata] 2026-10-17 09:20:59 engine started: /Users/jakecantrell/inference-lab/contributions/strata-vision-20261017/mlx-vision --serve --native /Users/jakecantrell/inference-lab/models/uncensored-gsq-iq3/eec4e10a2c29/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf --mtp /Users/jakecantrell/inference-lab/models/strata-mlx-mtp --expert-memory resident --vision --max-context 16384 --fusion-limit 6 --conversation-cache-mib 1024 --conversation-cache-min-tokens 0 --expert-profile off --keep-awake 2

@@ -1,0 +1,122 @@
+{
+  "status": "failed",
+  "steps": [
+    {
+      "label": "service-before",
+      "command": [
+        "launchctl",
+        "print",
+        "system/com.cantrell.inference-lab.server"
+      ],
+      "started_utc": "2026-10-17T14:16:47Z",
+      "pid": 98185,
+      "exit": 0
+    },
+    {
+      "label": "service-stop",
+      "command": [
+        "launchctl",
+        "bootout",
+        "system/com.cantrell.inference-lab.server"
+      ],
+      "started_utc": "2026-10-17T14:16:47Z",
+      "pid": 98186,
+      "exit": 0
+    },
+    {
+      "label": "contribution-tests",
+      "command": [
+        "/Users/jakecantrell/inference-lab/runtimes/strata-mlx/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "started_utc": "2026-10-17T14:16:49Z",
+      "pid": 98201,
+      "exit": 1
+    }
+  ],
+  "results": "/Users/jakecantrell/inference-lab/contributions/strata-20261012/results/vision-20261017T141636Z",
+  "source": "vision-zmuonvlz-on-local-b4b1a2ce",
+  "scheduler_lock": "held through restoration",
+  "protocol": "resident-serving-v1",
+  "updated_utc": "2026-10-17T14:17:47Z",
+  "photo_before": {
+    "primary": {
+      "state": "partial",
+      "processed": 39,
+      "remaining": 488442,
+      "planned": 488481,
+      "failed": 1,
+      "cached": 0,
+      "interrupted": false
+    },
+    "adult": {
+      "state": "completed",
+      "processed": 4,
+      "remaining": 0,
+      "planned": 4,
+      "failed": 0,
+      "cached": 0,
+      "interrupted": false
+    }
+  },
+  "photo_after_pause": {
+    "primary": {
+      "state": "partial",
+      "processed": 39,
+      "remaining": 488442,
+      "planned": 488481,
+      "failed": 1,
+      "cached": 0,
+      "interrupted": false
+    },
+    "adult": {
+      "state": "completed",
+      "processed": 4,
+      "remaining": 0,
+      "planned": 4,
+      "failed": 0,
+      "cached": 0,
+      "interrupted": false
+    }
+  },
+  "preflight_health": {
+    "status": "ok"
+  },
+  "preflight_props": 131072,
+  "launcher_sha256": "a9d0e1e8f2c5cf9166971c1d93d125fffd149f9a1a1a8ed03b0f2fafc0e89e12",
+  "plist_sha256": "8ee92fa50a1da8203ee301db674474084c5a774389b3d89c53b091e17501cb28",
+  "failure_type": "RuntimeError",
+  "failure_message": "Step failed: contribution-tests",
+  "restored_text": {
+    "pass": true,
+    "synthetic_output_sha256": "c2e3ac47f4a325469c1a2d5f117e463ec943c721986d5d9f09ac4540b7d80526"
+  },
+  "restored_image": {
+    "pass": true,
+    "synthetic_output_sha256": "55b206b407430560fd3699709be69bb8027a5489c6d8cc72a23e211346407e48"
+  },
+  "restored_viewer_pid": 1294,
+  "photo_restored": {
+    "primary": {
+      "state": "partial",
+      "processed": 39,
+      "remaining": 488442,
+      "planned": 488481,
+      "failed": 1,
+      "cached": 0,
+      "interrupted": false
+    },
+    "adult": {
+      "state": "completed",
+      "processed": 4,
+      "remaining": 0,
+      "planned": 4,
+      "failed": 0,
+      "cached": 0,
+      "interrupted": false
+    }
+  },
+  "restoration": "passed"
+}

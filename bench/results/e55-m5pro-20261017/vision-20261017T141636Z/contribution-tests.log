@@ -1,0 +1,30 @@
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+............................................................... [ 51%]
+........................................................................ [ 64%]
+........................................................................ [ 77%]
+........................................................................ [ 90%]
+.........................................F.........         [100%]
+=================================== FAILURES ===================================
+________ test_the_knowledge_base_has_no_errors_and_its_graph_is_current ________
+
+    def test_the_knowledge_base_has_no_errors_and_its_graph_is_current():
+        concepts, experiments, errors, _, found = wiki_check.check()
+        assert errors == []
+>       assert (wiki_check.WIKI / "graph.md").read_text() == wiki_check.graph(concepts, experiments, found)
+E       AssertionError: assert '# The relati...ent-noise |\n' == '# The relati...ent-noise |\n'
+E         
+E         Skipping 16359 identical leading characters in diff, use -v to show
+E         Skipping 7071 identical trailing characters in diff, use -v to show
+E         - zmuonvlz (b773837) |
+E         + zmuonvlz (3c44605) |
+E           | [The floats kept for prompts](concepts/kept-floats.md) | costs | [The memory rule](concepts/memory-rule.md) | #3, wysxmzsy (86c084c) |
+E           | [The floats kept for prompts](concepts/kept-floats.md) | part-of | [A prompt read in chunks](concepts/prompt-chunk.md) | ROADMAP: Against llama.cpp's server |...
+E         
+E         ...Full output truncated (62 lines hidden), use '-vv' to show
+
+tests/test_wiki.py:18: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_wiki.py::test_the_knowledge_base_has_no_errors_and_its_graph_is_current
+1 failed, 545 passed, 22 subtests passed in 44.71s

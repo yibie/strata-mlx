@@ -26,6 +26,8 @@ host memory. A Mac with unified memory does not need that half of it. This engin
   the dense tensors MLX would hold at twice their size stay the file's blocks, which leaves the experts more.
   A long prompt goes through the layers one at a time, so each layer's experts are read once for it.
 - **Strata's line protocol** on stdin and stdout (`strata_mlx/serve.py`).
+- **Opt-in image understanding**, using the official standalone image encoder and HTTP server.
+  The original Strata language-model engine is not required; see the [vision setup guide](docs/VISION.md).
 
 ## Measured
 
@@ -176,7 +178,7 @@ only; the prompt kernel uses Metal 4's Metal Performance Primitives.
 ```sh
 git clone https://github.com/yibie/strata-mlx && cd strata-mlx
 uv sync
-uv run pytest          # 256 tests, no model file needed
+uv run pytest          # unit tests, no model file needed
 ```
 
 The model, about 66 GB for Q2_0: both shards of one size from
@@ -224,7 +226,9 @@ The benchmarks in `bench/` tokenize with llama.cpp's `llama-tokenize`, and `benc
 
 ## Not there
 
-Image input, several conversations decoded together, and the files other than Q2_0 and IQ3_S. Conversation
+Image generation and several conversations decoded together. Image input is opt-in through
+[the external server/encoder setup](docs/VISION.md); this repository supplies the MLX receiving path.
+The files other than Q2_0 and IQ3_S have limited qualification. Conversation
 caches are 16-bit floats (3.9 GB at 128K tokens). Nothing here has run on a Mac with less than 128 GB.
 
 ## License

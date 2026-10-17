@@ -32,3 +32,5 @@ cells and rotates attention/indexer/MTP with interleaved (t,h,w) positions.
 Broader visual accuracy, other memory profiles, long context and sustained/concurrent serving remain open.
 
 - Synthetic full-model image/API validation and one-entry image-cache eviction regression are recorded separately from upstream-only tiny-model tests. [e55]
+
+- Deployment requires external official HTTP/tokenizer code and standalone encoder, not the original language-model engine. Portable setup and a schema-required CPU-only preflight are documented; no weights are bundled or started by configuration. [qkwxxvrp]

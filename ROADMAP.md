@@ -997,3 +997,8 @@ a pass. With it a script for the comparison, `bench/experiments/e54_shared_weigh
 ## Experimental image receiver
 
 Opt-in GENI/SVE1 input implemented locally using official encoder/HTTP handling. See docs/VISION.md; bounded synthetic image/reuse/cancellation qualification completed in the separate local resident integration (e55); broad vision/production qualification remains open. No production promotion.
+
+
+## Vision setup for other Macs
+
+Document the pinned external HTTP server and encoder-only build, tokenizer export, and matching projector. tools/configure_vision.py writes quoted loopback launchers/config without downloading or loading weights; tools/serve_vision.py checks actual schema validation before starting the external server. Existing output is refused; local resident/startup controls remain outside this contribution. No decoding or performance claim changes. See docs/VISION.md.

@@ -76,3 +76,5 @@
 Earlier experiments, e01-e42, are in [ROADMAP.md](../../ROADMAP.md) and `bench/experiments/`.
 
 The relations as a diagram: [graph.md](graph.md).
+
+- [[image-understanding]]: SVE1 receiving, IMRoPE and image-aware RAM parking.

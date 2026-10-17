@@ -1,0 +1,1 @@
+{"seconds": 36.154888625009335, "health": {"status": "ok", "max_context": 16384, "model": "flash-next-uncensored", "images": true, "api_key": false, "image_generation": false, "loaded": true, "service": "strata"}}

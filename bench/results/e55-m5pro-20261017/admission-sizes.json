@@ -1,0 +1,20 @@
+[
+  {
+    "cache_mib": 512,
+    "weight_bytes": 51582009344,
+    "working_bytes": 5000000000,
+    "vision_reserve_bytes": 536870912,
+    "required_bytes": 57655751168,
+    "limit_bytes": 57982058496,
+    "within_static_allowance": true
+  },
+  {
+    "cache_mib": 1024,
+    "weight_bytes": 51582009344,
+    "working_bytes": 5000000000,
+    "vision_reserve_bytes": 536870912,
+    "required_bytes": 58192622080,
+    "limit_bytes": 57982058496,
+    "within_static_allowance": false
+  }
+]

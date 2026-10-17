@@ -96,7 +96,7 @@ def _piece(e, prompt: list, subs: list, cuts: dict, on_chunk, on_step):
         contexts.append(mx.array([history[-ctx:]], dtype=e.context.dtype))
         history = history + prompt[a:b]
     contexts.append(mx.array([history[-ctx:]], dtype=e.context.dtype))
-    before = [mx.tile(m.embed_tokens(i), (1, 1, m.hc)) for i in ids]
+    before = [mx.tile(e.embed(i, a), (1, 1, m.hc)) for i, (a, _) in zip(ids, subs)]
     nothing = [(mx.zeros((1, i.shape[1], m.args.hidden_size), dtype=before[0].dtype),
                 mx.zeros((1, i.shape[1], m.hc), dtype=before[0].dtype)) for i in ids]
     out, inject = [x[0] for x in nothing], [x[1] for x in nothing]
@@ -135,7 +135,7 @@ def _piece(e, prompt: list, subs: list, cuts: dict, on_chunk, on_step):
             else:
                 x, before[c], inject[c] = e._hc((i, 0), T)(before[c], out[c], inject[c])
                 mask = create_attention_mask(before[c], e.attn[i])  # this layer's cache ends where the chunk begins
-                out[c] = layer.self_attn(x, m.rope, mask, e.attn[i], e.attn[i].indexer)
+                out[c] = layer.self_attn(x, e.rope, mask, e.attn[i], e.attn[i].indexer)
             mx.eval(before[c], out[c], inject[c], *_arrays([state, e.attn.get(i) and e.attn[i].keys]))
             step()
         for c in range(len(subs)):

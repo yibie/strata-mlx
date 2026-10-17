@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-17T14:28:43Z",
+  "health": {
+    "status": "ok"
+  },
+  "context": 131072,
+  "launcher_unchanged": true,
+  "plist_unchanged": true,
+  "viewer_pid": 13175,
+  "viewer_identity_matches": true,
+  "photo_action_busy": false,
+  "aggregate_checkpoints_unchanged": true,
+  "locks": {
+    "scheduler": "free",
+    "actions": "free",
+    "experiment": "free"
+  },
+  "experimental_children": [],
+  "production_logs_disabled": true
+}

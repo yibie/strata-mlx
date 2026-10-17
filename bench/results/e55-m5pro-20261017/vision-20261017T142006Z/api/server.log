@@ -1,0 +1,19 @@
+loading the vision encoder ...
+loading the model (the first start takes a minute or two) ...
+[strata] starting the engine: reading the model's weights ...
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/serve/server.py", line 6976, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/serve/server.py", line 6753, in main
+    engine = StrataEngine(exe, engine_args(cfg) + (effort_end or []), cwd=cfg.get("cwd"), log=cfg.get("log"),
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jakecantrell/inference-lab/contributions/strata-official-296b59d/serve/server.py", line 889, in __init__
+    raise EngineDied(why + (f" (see {log})" if log else "") + note +
+EngineDied: the engine exited before it was ready (see /Users/jakecantrell/inference-lab/contributions/strata-20261012/results/vision-20261017T142006Z/synthetic-engine.log)
+the engine process ended: exit code 1
+the engine log's last lines:
+  [strata] 2026-10-17 09:20:59 engine started: /Users/jakecantrell/inference-lab/contributions/strata-vision-20261017/mlx-vision --serve --native /Users/jakecantrell/inference-lab/models/uncensored-gsq-iq3/eec4e10a2c29/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf --mtp /Users/jakecantrell/inference-lab/models/strata-mlx-mtp --expert-memory resident --vision --max-context 16384 --fusion-limit 6 --conversation-cache-mib 1024 --conversation-cache-min-tokens 0 --expert-profile off --keep-awake 2
+  (those are the launcher's own lines: the engine itself wrote nothing)

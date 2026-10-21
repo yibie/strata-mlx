@@ -464,3 +464,4 @@ Colours by kind: component #dbeafe, concept #f3f4f6, constraint #fee2e2, hardwar
 | [e59: the delta-net recurrence alone](experiments/e59-recurrence-kernels.md) | decode-pass |
 | [e60: the dense tensors as the file's blocks, against llama.cpp](experiments/e60-dense-blocks-agreement.md) | dense-blocks, reference-agreement |
 | [e61: window kernels for the dense tensors at the file's bits](experiments/e61-dense-window-kernels.md) | dense-blocks |
+| [e62: the dense tensors at the file's bits, in a whole pass](experiments/e62-dense-planes-in-pass.md) | dense-blocks |

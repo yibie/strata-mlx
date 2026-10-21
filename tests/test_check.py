@@ -82,11 +82,13 @@ def test_blocks_spare_what_the_arrays_of_their_tensors_take_more(tmp_path):
 
     tensors = {t.name: t for t in (
         t("token_embd.weight", (8, 2560), "Q3_K"),  # a byte and an eighth a weight as arrays, 110 bytes to 256 here
+        t("blk.0.attn_v.weight", (4, 2560), "Q3_K"),  # a layer's Q3_K as planes: 114 bytes to 256
         t("blk.0.attn_q.weight", (4, 2560), "IQ4_XS"),
         t("blk.0.attn_k.weight", (4, 2560), "Q4_K"),  # as arrays either way
         t("output.weight", (8, 2560), "Q3_K"),  # and so is the output layer, whatever its type
         t("blk.0.ffn_up_exps.weight", (2, 4, 2560), "IQ4_XS"))}  # experts are blocks already
-    assert dense.spared(tensors) == 8 * 2560 // 256 * (288 - 110) + 4 * 2560 // 256 * (288 - 136)
+    assert dense.spared(tensors) == (8 * 2560 // 256 * (288 - 110) + 4 * 2560 // 256 * (288 - 114)
+                                     + 4 * 2560 // 256 * (288 - 136))
     path = tmp_path / "some-Q9_Z-00001-of-00001.gguf"
     path.write_bytes(b"0")
     m = of(str(path), [SimpleNamespace(tensors=tensors, path=str(path))])

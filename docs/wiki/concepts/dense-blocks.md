@@ -26,6 +26,10 @@ unpack them, and the experts have the 1.74 GB.
 
 ## What we know
 
+- In a whole pass, Q3_K as planes and IQ4_XS through e36's kernel against the 8-bit arrays: 1.3 ms shorter at
+  one token, 0.9 at two, 0.6 longer at four, 1.9 at eight; so held whole the model keeps the arrays, and where
+  experts are read from the SSD Q3_K goes through the planes [e62].
+
 - Q3_K rearranged at load into aligned planes is faster than MLX's 8-bit at 1 to 8 tokens (65-109 against
   80-116 us a 10,240 x 2,560 tensor); IQ4_XS is faster through e36's kernel at 1-2 tokens and as planes at 4-8.
   All are bound by decoding, far above the file's bytes (23-28 us) [e61].

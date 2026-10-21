@@ -28,7 +28,7 @@ has in place of MLX's arrays of Q3_K and IQ4_XS tensors, which take more than tw
 import mlx.core as mx
 import numpy as np
 
-from .blocks import BLOCK, dequantize, window_matvec
+from .blocks import BLOCK, Q3K_PLANE_BYTES, dequantize, q3k_planes, q3k_planes_dequantize, q3k_planes_window, window_matvec
 
 MAX_TOKENS = 8  # more than a window: a chunk of a prompt, multiplied as floats
 _ROWS, _WEIGHTS = 4, 8  # to 32 threads; to a thread at a time
@@ -178,7 +178,8 @@ class ScaledLinear:
 # eight. A machine with every expert in memory answers four tokens a pass with its draft head and has no use
 # for the memory, so it keeps the arrays.
 
-AS_BLOCKS = ("Q3_K", "IQ4_XS")  # the types kept so where experts are read from the SSD (load.py)
+AS_BLOCKS = ("Q3_K", "IQ4_XS")  # the dense types kept as the file's blocks (load.py)
+PLANES = True  # Q3_K's blocks rearranged into planes (blocks.q3k_planes)
 ARRAY_BYTES = 1.125  # a weight of these as MLX holds it: a byte, and a float16 scale and bias to every 32
 
 
@@ -190,8 +191,15 @@ def as_blocks(t, kinds: tuple = AS_BLOCKS) -> bool:
 def spared(tensors: dict) -> int:
     """Bytes that the dense tensors of a file's first shard take less as blocks than as MLX's arrays. The output
     layer is not among them: it stays arrays whatever its type."""
-    return sum(int(ARRAY_BYTES * int(np.prod(t.shape))) - t.data.nbytes for name, t in tensors.items()
+    return sum(int(ARRAY_BYTES * int(np.prod(t.shape))) - (t.data.nbytes if name == "token_embd.weight" else held_bytes(t))
+               for name, t in tensors.items()
                if as_blocks(t) and not name.endswith("_exps.weight") and name != "output.weight")
+
+
+def held_bytes(t) -> int:
+    """What a dense layer kept as blocks takes: the file's bytes, or for Q3_K those of its planes. (The embedding
+    keeps the file's blocks: a token's row is unpacked when it comes.)"""
+    return t.data.nbytes // 110 * Q3K_PLANE_BYTES if t.type == "Q3_K" and PLANES else t.data.nbytes
 
 
 class BlockLinear:
@@ -205,10 +213,13 @@ class BlockLinear:
         self.blocks, self.kind = blocks, kind
         self.output_dims, self.input_dims = shape
         self.to_file = None if inputs is None else mx.array(np.argsort(inputs).astype(np.uint32))
+        self.planes = None
+        if kind == "Q3_K" and PLANES:  # held as planes instead (blocks.q3k_planes): faster for windows, e61
+            self.planes, self.blocks = q3k_planes(blocks, *shape), None
 
     @property
     def nbytes(self) -> int:
-        return self.blocks.nbytes
+        return self.blocks.nbytes if self.planes is None else sum(a.nbytes for a in self.planes.values())
 
     def __call__(self, x: mx.array) -> mx.array:
         rows, cols = self.output_dims, self.input_dims
@@ -217,7 +228,10 @@ class BlockLinear:
         x = x.reshape(tokens, cols)
         if self.to_file is not None:
             x = mx.take(x, self.to_file, axis=1)
-        if tokens <= MAX_TOKENS:
+        if self.planes is not None:
+            out = (q3k_planes_window(self.planes, rows, cols, x) if tokens <= MAX_TOKENS
+                   else x @ q3k_planes_dequantize(self.planes, rows, cols, dtype).T)
+        elif tokens <= MAX_TOKENS:
             out = window_matvec(self.blocks, self.kind, rows, cols, x)
         else:
             # A chunk of a prompt: the weights unpacked for it and let go, at most 63 MB at a time. All of a

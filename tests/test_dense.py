@@ -112,7 +112,7 @@ def test_a_shape_the_kernel_does_not_take_stays_floats():
 
 # ---- layers kept as the file's blocks (BlockLinear, BlockEmbedding)
 
-from strata_mlx.dense import BlockEmbedding, BlockLinear, as_blocks  # noqa: E402
+from strata_mlx.dense import BlockEmbedding, BlockLinear, as_blocks, held_bytes  # noqa: E402
 from strata_mlx.load import AS_BLOCKS, embedding  # noqa: E402
 from test_gguf import random_tensor  # noqa: E402
 from test_gguf import reference as weights  # noqa: E402
@@ -124,7 +124,7 @@ from test_gguf import reference as weights  # noqa: E402
 def test_a_layer_of_blocks_multiplies_as_its_weights_do(kind, tokens, dtype):
     t = random_tensor(kind, seed=tokens)
     lin = linear(t, as_blocks=AS_BLOCKS)
-    assert isinstance(lin, BlockLinear) and lin.nbytes == t.data.nbytes
+    assert isinstance(lin, BlockLinear) and lin.nbytes == held_bytes(t)
     x = mx.random.normal((1, tokens, t.shape[1])).astype(dtype)
     got = np.array(lin(x).astype(mx.float32))
     want = np.array(x.astype(mx.float32)).astype(np.float64) @ weights(t).astype(np.float64).T

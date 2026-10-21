@@ -1,0 +1,9 @@
+=== dense planes, 1537 tokens
+engine, 1 a pass: top token equal at 61/64 steps (differs: first at step 3); largest log-probability gap among llama.cpp's top 5: 1.7865
+engine, 4 a pass: top token equal at 64/64 steps (differs: never); largest log-probability gap among llama.cpp's top 5: 0.8604
+=== dense planes, 3161 tokens
+engine, 1 a pass: top token equal at 63/64 steps (differs: first at step 59); largest log-probability gap among llama.cpp's top 5: 1.2990
+engine, 4 a pass: top token equal at 64/64 steps (differs: never); largest log-probability gap among llama.cpp's top 5: 1.1506
+=== dense planes, 6945 tokens
+engine, 1 a pass: top token equal at 63/64 steps (differs: first at step 4); largest log-probability gap among llama.cpp's top 5: 1.5490
+engine, 4 a pass: top token equal at 63/64 steps (differs: first at step 4); largest log-probability gap among llama.cpp's top 5: 1.4624

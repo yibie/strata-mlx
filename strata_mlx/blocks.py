@@ -394,6 +394,124 @@ def window_matvec(blocks: mx.array, kind: str, rows: int, cols: int, x: mx.array
     return out
 
 
+# Q3_K held as planes: a tensor's blocks rearranged once into aligned arrays of their parts, the same bits of
+# weight; the 12 bytes of a block's 6-bit scales become 16 int8, so 114 bytes a block where the file has 110. A
+# thread then reads its words where e36's kernel read bytes, eight times over: a 10,240 x 2,560 tensor of the
+# Q2_0 file at 1 / 2 / 4 / 8 tokens in 67 / 64 / 72 / 109 us, MLX's 8-bit form of it in 80 / 81 / 83 / 116 (e61).
+Q3K_PLANE_BYTES = 114  # a block's, against the file's 110
+
+def q3k_planes(blocks: mx.array, rows: int, cols: int) -> dict:
+    """A Q3_K tensor's blocks (rows, cols as the file has them) -> its planes."""
+    b = np.array(blocks).reshape(rows, cols // 256, 110)
+    sc12 = b[..., 96:108]
+    sc = np.empty(b.shape[:-1] + (16,), dtype=np.int16)
+    for k in range(16):  # as q3k_scale
+        p, word = k % 4, k // 4
+        low = (sc12[..., 4 * word + p] & 15) if word < 2 else (sc12[..., 4 * (word - 2) + p] >> 4)
+        sc[..., k] = (low.astype(np.int16) | (((sc12[..., 8 + p] >> (2 * word)) & 3).astype(np.int16) << 4)) - 32
+    return {"hm": mx.array(np.ascontiguousarray(b[..., 0:32]).reshape(-1).view(np.uint32)),
+            "qs": mx.array(np.ascontiguousarray(b[..., 32:96]).reshape(-1).view(np.uint32)),
+            "sc": mx.array(sc.astype(np.int8).reshape(-1)),
+            "dd": mx.array(np.ascontiguousarray(b[..., 108:110]).reshape(-1).view(np.float16))}
+
+
+# the weight `i` (0-31) of run `rr` (0-7) of a block, from that half's words: as unpack32 of Q3_K has it
+_Q3K_WEIGHT = """
+inline int q3k_value(uint qw, uint hw, uint k, uint j, uint rr) {
+    return int((qw >> (8 * k + 2 * j)) & 3) - (((hw >> (8 * k + rr)) & 1) ? 0 : 4);
+}
+"""
+
+_Q3K_PLANES_WINDOW = """
+    uint part = thread_position_in_grid.x % P;
+    uint r = thread_position_in_grid.x / P;
+    float sum[T];
+    for (uint t = 0; t < T; ++t) sum[t] = 0.0f;
+    for (uint h = part; h < 2 * BLOCKS; h += P) {  // half a block, 128 weights, at a time
+        uint blk = r * BLOCKS + h / 2, n = h % 2;
+        const device uint* hmw = hm + blk * 8;
+        const device uint* qsw = qs + blk * 16 + 8 * n;
+        const device int8_t* scl = sc + blk * 16;
+        float d = float(dd[blk]);
+        uint hwords[8], qwords[8];
+        for (uint w = 0; w < 8; ++w) { hwords[w] = hmw[w]; qwords[w] = qsw[w]; }
+        uint base = (h / 2) * 256 + 128 * n;
+        for (uint j = 0; j < 4; ++j) {
+            uint rr = 4 * n + j;
+            float acc0[T], acc1[T];
+            for (uint t = 0; t < T; ++t) { acc0[t] = 0.0f; acc1[t] = 0.0f; }
+            for (uint w4 = 0; w4 < 8; ++w4) {
+                float4 v;
+                for (uint k = 0; k < 4; ++k) v[k] = float(q3k_value(qwords[w4], hwords[w4], k, j, rr));
+                uint xi = base + 32 * j + 4 * w4;
+                for (uint t = 0; t < T; ++t) {
+                    float4 xx = float4(*(const device metal::vec<InT, 4>*)(x + t * COLS + xi));
+                    if (w4 < 4) acc0[t] += dot(v, xx); else acc1[t] += dot(v, xx);
+                }
+            }
+            float s0 = d * float(scl[2 * rr]), s1 = d * float(scl[2 * rr + 1]);
+            for (uint t = 0; t < T; ++t) sum[t] += s0 * acc0[t] + s1 * acc1[t];
+        }
+    }
+    for (uint t = 0; t < T; ++t) {
+        float total = sum[t];
+        for (ushort k = 1; k < P; k <<= 1) total += simd_shuffle_xor(total, k);
+        if (part == 0) out[t * ROWS + r] = static_cast<OutT>(total);
+    }
+"""
+
+# the weights as floats, for a chunk of a prompt: d * scale * value, as dequantize gives them from the blocks
+_Q3K_PLANES_DEQUANT = """
+    uint blk = thread_position_in_grid.x;  // a thread to a run of 32: (row, block, run)
+    uint rr = blk % 8;
+    blk /= 8;
+    uint n = rr / 4, j = rr % 4;
+    const device uint* hmw = hm + blk * 8;
+    const device uint* qsw = qs + blk * 16 + 8 * n;
+    float d = float(dd[blk]);
+    float s0 = d * float(sc[blk * 16 + 2 * rr]), s1 = d * float(sc[blk * 16 + 2 * rr + 1]);
+    auto o = out + blk * 256 + 32 * rr;
+    for (uint w4 = 0; w4 < 8; ++w4) {
+        for (uint k = 0; k < 4; ++k) {
+            o[4 * w4 + k] = static_cast<OutT>((w4 < 4 ? s0 : s1) * float(q3k_value(qsw[w4], hmw[w4], k, j, rr)));
+        }
+    }
+"""
+
+
+def q3k_planes_window(planes: dict, rows: int, cols: int, x: mx.array) -> mx.array:
+    """out[t] = W . x[t] for a Q3_K tensor held as planes, x (tokens, cols). Returns (tokens, rows)."""
+    T = x.shape[0]
+    # Threads to a row by the tensor's shape, never by the window: a token must get the same bits alone as in a
+    # window, which a different split of the row's sum would not give it. Two for 10,240 rows (e61); more where
+    # rows are few, so that a tensor of 640 rows has threads enough to fill the GPU.
+    per_row = 2
+    while per_row < 16 and rows * per_row < 20480 and (2 * cols // 256) // (2 * per_row) >= 1:
+        per_row *= 2
+    key = ("q3k_planes", rows, cols, T, per_row, x.dtype)
+    if key not in _kernels:
+        header = ("".join(f"constant uint {k} = {v};\n" for k, v in
+                          {"ROWS": rows, "COLS": cols, "BLOCKS": cols // 256, "P": per_row, "T": T}.items())
+                  + _Q3K_WEIGHT)
+        _kernels[key] = mx.fast.metal_kernel(name=f"q3k_planes_{T}", input_names=["hm", "qs", "sc", "dd", "x"],
+                                             output_names=["out"], source=_Q3K_PLANES_WINDOW, header=header)
+    return _kernels[key](inputs=[planes["hm"], planes["qs"], planes["sc"], planes["dd"], x],
+                         template=[("InT", x.dtype), ("OutT", x.dtype)], grid=(per_row * rows, 1, 1),
+                         threadgroup=(64, 1, 1),
+                         output_shapes=[(T, rows)], output_dtypes=[x.dtype])[0]
+
+
+def q3k_planes_dequantize(planes: dict, rows: int, cols: int, dtype: mx.Dtype = mx.float32) -> mx.array:
+    key = ("q3k_planes_dequant",)
+    if key not in _kernels:
+        _kernels[key] = mx.fast.metal_kernel(name="q3k_planes_dequant", input_names=["hm", "qs", "sc", "dd"],
+                                             output_names=["out"], source=_Q3K_PLANES_DEQUANT, header=_Q3K_WEIGHT)
+    runs = rows * cols // 32
+    return _kernels[key](inputs=[planes["hm"], planes["qs"], planes["sc"], planes["dd"]], template=[("OutT", dtype)],
+                         grid=(runs, 1, 1), threadgroup=(min(256, runs), 1, 1),
+                         output_shapes=[(rows, cols)], output_dtypes=[dtype])[0]
+
+
 def dequantize(blocks: mx.array, kind: str, shape: tuple, dtype: mx.Dtype = mx.float32) -> mx.array:
     """The weights of `blocks` (uint8, a tensor of `shape` as the file holds it) as floats."""
     *lead, rows, cols = shape

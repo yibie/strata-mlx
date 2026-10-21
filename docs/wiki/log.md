@@ -2,6 +2,9 @@
 
 > 中文摘要:知识库的变更记录,最新的在前。每行写日期、jj change ID、改了哪些页、依据什么。
 
+- 2026-10-21 · [lqvqmrmr] · e62 and Q3_K held as planes where the dense tensors are blocks (experts from the SSD): a
+  pass at the file's bits is 1.3 ms shorter at one token, longer from four; held whole the model keeps 8-bit
+  arrays; agreement with llama.cpp 378 of 384; dense-blocks.
 - 2026-10-21 · [yrkwxyqy] · e61: window kernels for the dense tensors at the file's bits: Q3_K as planes faster than MLX's
   8-bit at every size, IQ4_XS through e36's kernel at 1-2 tokens; bound by decoding; dense-blocks.
 - 2026-10-21 · [oyvuuyuk] · e60: the dense tensors as the file's blocks agree with llama.cpp as well as the 8-bit arrays

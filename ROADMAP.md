@@ -993,3 +993,18 @@ enough to choose 8. Merged with `--fusion-limit 6|8` to set it by hand; the engi
 two M5s do not say what else to choose by. Pull request 9's switches were faster at every size there too, 1.4-4.8 ms
 a pass. With it a script for the comparison, `bench/experiments/e54_shared_weight_controls.py`, and
 `bench/compare_results.py`, which summarizes a run only when every planned sample is in it.
+
+### Pull request 13 (cantrellsolutions, measured on an M5 Pro with 64 GB)
+
+Pictures, opt-in (`--vision`): Strata's standalone encoder and its server do the image work as they are, and the
+engine receives the encoder's rows (`GENI`, the SVE1 records) and puts them at the image tokens of the prompt
+(`strata_mlx/vision.py`). The attention, the indexer and the draft head rotate those positions by (t, h, w) as
+Strata does, through the kernels already here (the fused q/k-rope kernel takes its cos and sin from the rope it is
+given); a conversation with images is parked and taken back only by a prompt with the same images at the same
+places. Without `--vision` nothing changes. Measured by the pull request's author on his 20-core M5 Pro, on this
+branch, with Q2_0 held in part (20 GB of experts): 17 of 17 synthetic requests right, two 1024 x 768 images in a
+prompt of 4,442 tokens and a follow-up of 4,482 (4,455 reused), past the indexer's 2,048; decoding with an image
+in the context 42-62 tok/s against 63-67 without, in two shuffled triplets with a duplicate control at 57-66, so
+what an image costs a pass is not told apart yet (e64). An earlier run of his, on an integration branch with an
+unsupported abliterated IQ3_XXS file, is kept as history (e63). The deployment helpers and the server policy that
+came with the first version were left out of this pull request.

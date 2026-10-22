@@ -25,6 +25,7 @@ hands; a prompt that continues it takes it back.
 - depends-on → [[checkpoints]]: a parked conversation keeps the root, a pinned one and the last two of its checkpoints [yumvopms]
 - costs → [[memory-rule]]: its budget comes out of the machine's memory before the experts' share is worked out; a conversation of 10,038 tokens was 732 MiB [yumvopms]
 - depends-on → [[exactness]]: in float32 the same answers with and without parking; in float16 three of nine requests parted, a turn that goes on from a state against one that reads the conversation again [yumvopms]
+- depends-on → [[image-understanding]]: a conversation with images is taken back only by a prompt with the same images at the same places (grid and a hash of the rows) [e63] [#13]
 
 ## What we know
 
@@ -35,6 +36,8 @@ hands; a prompt that continues it takes it back.
 | a 64 GB M5 Pro, IQ3_S, after an unrelated request [#8] | 23.4 s | 0.68 s |
 
 - Parking and taking back are 0.3 ms; 8,192 MiB was no better than 4,096 on the M5 Pro [#8].
+- With images, the destination is taken before the departing conversation is parked: with room for one
+  conversation, parking first evicted the very one being resumed (found on the M5 Pro, a test holds it) [e63] [#13].
 
 ## Open questions
 

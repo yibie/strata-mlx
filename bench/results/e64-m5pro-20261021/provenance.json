@@ -1,0 +1,56 @@
+{
+  "tested_commit": "2411255c15d4005326c6bae82f22f38934b327be",
+  "benchmark_sha256": "c95f76a34fc6693353b02aff3766756cfa0c96cdbaba8a3dac484379517d7a31",
+  "config": {
+    "exe": "<lab>/contributions/strata-pr13-rebase-20261021/mlx-vision",
+    "args": [
+      "--native",
+      "<lab>/models/standard-gsq/ed59f92082b1/Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf",
+      "--mtp",
+      "<lab>/models/strata-mlx-mtp",
+      "--vision",
+      "--expert-memory",
+      "20",
+      "--max-context",
+      "8192",
+      "--fusion-limit",
+      "6",
+      "--conversation-cache-mib",
+      "0",
+      "--expert-profile",
+      "off",
+      "--keep-awake",
+      "2"
+    ],
+    "cwd": "<lab>/contributions/strata-pr13-rebase-20261021/source",
+    "tokenizer": "<lab>/contributions/strata-official-296b59d/comparison-pack/tokenizer",
+    "model_name": "vision-review-q2",
+    "env": {
+      "MTL_DEBUG_LAYER": "0"
+    },
+    "vision": {
+      "exe": "<lab>/contributions/strata-official-296b59d/build-vision/bin/strata-vision",
+      "gpu": true,
+      "max_tokens": 1024,
+      "model": "<lab>/models/standard-gsq/ed59f92082b1/Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf",
+      "mmproj": "<lab>/models/uncensored-flash-vision/eec4e10a2c29/mmproj-Qwen3.8-Flash-Next-BF16.gguf"
+    }
+  },
+  "model_repository": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF",
+  "model_revision": "ed59f92082b1e93c0e96d60a8b11aab089b52f09",
+  "previously_sha256_verified_model_files": [
+    {
+      "path": "<lab>/models/standard-gsq/ed59f92082b1/Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf",
+      "sha256": "69820c02ec7d0b45ef2ebb19d6620299db749fe2aded7f39f93c6b88b199b720",
+      "bytes": 37623740192
+    },
+    {
+      "path": "<lab>/models/standard-gsq/ed59f92082b1/Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00002-of-00002.gguf",
+      "sha256": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+      "bytes": 28800138432
+    }
+  ],
+  "external_server_sha256": "6c45c639e28a873b854606719d9ce2bb2e0df666f105164e78e2735878b9aa8f",
+  "upstream_base": "5fea2f2833ff0033bf6349f17f1589585035de81",
+  "protocol_note": "Unchanged e56-pr13-supported-file-v2 client renamed e63; this is a new October 21 run after rebase. Historical model checksums were not rehashed during measurement."
+}

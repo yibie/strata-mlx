@@ -1,0 +1,65 @@
+{
+  "protocol": "e56-pr13-supported-file-v2",
+  "source_sha256": {
+    "strata_mlx/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "strata_mlx/attention.py": "cce2070f605be3a225ed5912173e909525a888e6814385f51217f7999ad559df",
+    "strata_mlx/blocks.py": "40f4541f947c7866c84178346f06d75c35d702bf414fb43d1de17df04d0cde55",
+    "strata_mlx/bylayer.py": "7259e35bc6cd1fcbb21621cfcfb530a662e660bc89d0b26609d22aab31a77825",
+    "strata_mlx/check.py": "680fad5530252235a04601d4a711bbb3f92bb9e03d004702b3f04404527c2bfd",
+    "strata_mlx/conversations.py": "c665bd50871408b0f297953f8c089d012cc7416e790097aa38663476406d8ee5",
+    "strata_mlx/dense.py": "3a563acbad32dffdea6d90a316b7c511fff15fe5ba463e65c97b9c6b8cd209da",
+    "strata_mlx/drafting.py": "e1c27b01d3d72b53ee38ccf486c246fa03fb69f134841deeb6718aa8269430a8",
+    "strata_mlx/engine.py": "4d5ffaed0ca72a4ed515e0ce27bc22ee1393760ae285ec6bba68ea27b62dc8d8",
+    "strata_mlx/fused.py": "80d1bfb92ca779064f9e8ed14818f4ffa43938e3a4b785c23cf8a28a3b1d4a65",
+    "strata_mlx/gguf.py": "3941b6318fba15551704ea8051a7c81c8a927923bfdb95f5a8d419de2baeb050",
+    "strata_mlx/load.py": "b9a6f3511b052fb873bf2c763032db81aa7eb5d124e9a6c48cd556738ac93ec6",
+    "strata_mlx/mtp.py": "87531ab6a9ae8e4477a9d968c69aedac6c9bb41ee009c9a9691c6137c67545ba",
+    "strata_mlx/paged.py": "a31abfc2003bf44dc338ba892e26c674bcd67ed5ce4167643010747583eb5f40",
+    "strata_mlx/rows.py": "48d2215e6faf10bb6d66c3965fcbbe85412ef826dee604d1699555d00bb650db",
+    "strata_mlx/sampler.py": "af5383206c4a492bed693e029d7edb3c95f89ea650ed51718df4218647762340",
+    "strata_mlx/serve.py": "cb369aac2f8f9f1a36eb4cf9daaac72ec9fa03e07a6e74c26dcb31966a2c056a",
+    "strata_mlx/vision.py": "85995aceb3b66978ab3094e2f65793790baed03c52a64c76ae0aead7de20cdb7"
+  },
+  "native_args": [
+    "--native",
+    "<lab>/models/standard-gsq/ed59f92082b1/Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf",
+    "--mtp",
+    "<lab>/models/strata-mlx-mtp",
+    "--vision",
+    "--expert-memory",
+    "20",
+    "--max-context",
+    "8192",
+    "--fusion-limit",
+    "6",
+    "--conversation-cache-mib",
+    "0",
+    "--expert-profile",
+    "off",
+    "--keep-awake",
+    "2"
+  ],
+  "model_files": [
+    {
+      "name": "Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf",
+      "bytes": 37623740192
+    },
+    {
+      "name": "Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00002-of-00002.gguf",
+      "bytes": 28800138432
+    }
+  ],
+  "fixture_sha256": {
+    "strata-731.png": "f3578a4b1d67476e7f20c0f0d1265709789527fa99218447b1d1ec95b5287d45",
+    "maple-482.png": "1f562f6fa7d5339f0a1ea0b7f259cd44a5433501a4d95af3575bfcaf48aa7432"
+  },
+  "font_sha256": "525979822591a3447cfc49d943d6f7683508e25543407871c0ed8fed05fd2bd9",
+  "external_server_revision": "296b59d2f73c8f04a805df29c2fa97655adace78",
+  "precision": {
+    "dtype": "float16",
+    "MLX_ENABLE_TF32": null,
+    "MTL_DEBUG_LAYER": "0"
+  },
+  "cold_warm": "F_NOCACHE requested on both shards before each measured request; actual page residency not measured; live engine/expert arrays retained",
+  "comparison_limits": "Same weights and engine; image presence changes prompt length and positions. Not isolated ImageRoPE cost."
+}

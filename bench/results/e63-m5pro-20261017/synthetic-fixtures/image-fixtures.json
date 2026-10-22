@@ -1,0 +1,23 @@
+[
+  {
+    "name": "STRATA 731",
+    "path": "strata-731.png",
+    "prompt": "Read the printed text in this synthetic image. Return only that text.",
+    "expected": "STRATA 731"
+  },
+  {
+    "name": "MAPLE 482",
+    "path": "maple-482.png",
+    "prompt": "Read the printed text in this synthetic image. Return only that text.",
+    "expected": "MAPLE 482"
+  },
+  {
+    "name": "color-counts",
+    "path": "count-squares.png",
+    "prompt": "Count the colored squares. Return only a JSON object with exactly two keys: red and blue. The values must be integer counts.",
+    "expected": {
+      "red": 2,
+      "blue": 1
+    }
+  }
+]

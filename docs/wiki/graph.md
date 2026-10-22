@@ -22,12 +22,14 @@ flowchart LR
   conversations -- 1 --> answers
   conversations -- 4 --> memory
   conversations -- 1 --> precision
+  conversations -- 1 --> prompts
   memory -- 3 --> answers
   memory -- 1 --> precision
   precision -- 2 --> across
   precision -- 2 --> answers
   prompts -- 2 --> across
   prompts -- 2 --> answers
+  prompts -- 2 --> conversations
   prompts -- 4 --> memory
 ```
 
@@ -242,27 +244,33 @@ flowchart LR
 
 ## Reading prompts
 
-5 concepts, 14 relations touching them.
+6 concepts, 17 relations touching them.
 
 ```mermaid
 flowchart LR
   expert_tiles["A prompt's experts in tiles"]
   gpu_idle["The GPU after a rest"]
+  image_understanding["Image understanding"]
   kept_floats["The floats kept for prompts"]
   ngram_table["The n-gram table"]
   prompt_chunk["A prompt read in chunks"]
+  attention_cache["The attention caches"]
+  conversation_parking["Parked conversations"]
   decode_pass["A decode pass"]
   gpu_generation["The GPU's generation"]
   kernel_fixed_cost["The fixed cost of a kernel"]
   memory_rule["The memory rule"]
   page_cache["The page cache"]
   working_memory["Working memory"]
+  conversation_parking -- depends-on --> image_understanding
   expert_tiles -- part-of --> prompt_chunk
   expert_tiles -- limited-by --> kernel_fixed_cost
   expert_tiles -- depends-on --> gpu_generation
   gpu_idle -- costs --> prompt_chunk
   gpu_idle -- depends-on --> gpu_generation
   gpu_idle -- depends-on --> memory_rule
+  image_understanding -- depends-on --> conversation_parking
+  image_understanding -- depends-on --> attention_cache
   kept_floats -- costs --> memory_rule
   kept_floats -- part-of --> prompt_chunk
   ngram_table -- depends-on --> page_cache
@@ -274,9 +282,9 @@ flowchart LR
   classDef component fill:#dbeafe,stroke:#555
   class expert_tiles,kept_floats,ngram_table component
   classDef mechanism fill:#dcfce7,stroke:#555
-  class gpu_idle,prompt_chunk mechanism
+  class gpu_idle,image_understanding,prompt_chunk mechanism
   classDef elsewhere fill:#ffffff,stroke:#aaa,stroke-dasharray:4 3,color:#777
-  class decode_pass,gpu_generation,kernel_fixed_cost,memory_rule,page_cache,working_memory elsewhere
+  class attention_cache,conversation_parking,decode_pass,gpu_generation,kernel_fixed_cost,memory_rule,page_cache,working_memory elsewhere
 ```
 
 | from | relation | to | evidence |
@@ -287,6 +295,8 @@ flowchart LR
 | [The GPU after a rest](concepts/gpu-idle.md) | costs | [A prompt read in chunks](concepts/prompt-chunk.md) | #1, ssmutmqs |
 | [The GPU after a rest](concepts/gpu-idle.md) | depends-on | [The GPU's generation](concepts/gpu-generation.md) | #7 |
 | [The GPU after a rest](concepts/gpu-idle.md) | depends-on | [The memory rule](concepts/memory-rule.md) | #7, #8 |
+| [Image understanding](concepts/image-understanding.md) | depends-on | [Parked conversations](concepts/conversation-parking.md) | e63, #13 |
+| [Image understanding](concepts/image-understanding.md) | depends-on | [The attention caches](concepts/attention-cache.md) | e64 |
 | [The floats kept for prompts](concepts/kept-floats.md) | costs | [The memory rule](concepts/memory-rule.md) | #3, wysxmzsy |
 | [The floats kept for prompts](concepts/kept-floats.md) | part-of | [A prompt read in chunks](concepts/prompt-chunk.md) | ROADMAP: Against llama.cpp's server |
 | [The n-gram table](concepts/ngram-table.md) | depends-on | [The page cache](concepts/page-cache.md) | uoonprvo, #10 |
@@ -298,7 +308,7 @@ flowchart LR
 
 ## Conversations
 
-6 concepts, 12 relations touching them.
+6 concepts, 15 relations touching them.
 
 ```mermaid
 flowchart LR
@@ -310,6 +320,7 @@ flowchart LR
   stopping["Stopping a request"]
   decode_pass["A decode pass"]
   exactness["Exactness"]
+  image_understanding["Image understanding"]
   layer_major_prefill["A prompt read a layer at a time"]
   memory_rule["The memory rule"]
   attention_cache -- costs --> memory_rule
@@ -319,6 +330,9 @@ flowchart LR
   conversation_parking -- depends-on --> checkpoints
   conversation_parking -- costs --> memory_rule
   conversation_parking -- depends-on --> exactness
+  conversation_parking -- depends-on --> image_understanding
+  image_understanding -- depends-on --> conversation_parking
+  image_understanding -- depends-on --> attention_cache
   recurrent_state -- costs --> conversation_parking
   recurrent_state -- depends-on --> checkpoints
   session_files -- depends-on --> recurrent_state
@@ -331,7 +345,7 @@ flowchart LR
   classDef mechanism fill:#dcfce7,stroke:#555
   class checkpoints,conversation_parking,stopping mechanism
   classDef elsewhere fill:#ffffff,stroke:#aaa,stroke-dasharray:4 3,color:#777
-  class decode_pass,exactness,layer_major_prefill,memory_rule elsewhere
+  class decode_pass,exactness,image_understanding,layer_major_prefill,memory_rule elsewhere
 ```
 
 | from | relation | to | evidence |
@@ -343,6 +357,7 @@ flowchart LR
 | [Parked conversations](concepts/conversation-parking.md) | depends-on | [Checkpoints](concepts/checkpoints.md) | yumvopms |
 | [Parked conversations](concepts/conversation-parking.md) | costs | [The memory rule](concepts/memory-rule.md) | yumvopms |
 | [Parked conversations](concepts/conversation-parking.md) | depends-on | [Exactness](concepts/exactness.md) | yumvopms |
+| [Parked conversations](concepts/conversation-parking.md) | depends-on | [Image understanding](concepts/image-understanding.md) | e63, #13 |
 | [The recurrent state](concepts/recurrent-state.md) | costs | [Parked conversations](concepts/conversation-parking.md) | yumvopms |
 | [The recurrent state](concepts/recurrent-state.md) | depends-on | [Checkpoints](concepts/checkpoints.md) | ROADMAP: Done |
 | [A conversation on disk](concepts/session-files.md) | depends-on | [The recurrent state](concepts/recurrent-state.md) | ROADMAP: Done |
@@ -465,3 +480,5 @@ Colours by kind: component #dbeafe, concept #f3f4f6, constraint #fee2e2, hardwar
 | [e60: the dense tensors as the file's blocks, against llama.cpp](experiments/e60-dense-blocks-agreement.md) | dense-blocks, reference-agreement |
 | [e61: window kernels for the dense tensors at the file's bits](experiments/e61-dense-window-kernels.md) | dense-blocks |
 | [e62: the dense tensors at the file's bits, in a whole pass](experiments/e62-dense-planes-in-pass.md) | dense-blocks |
+| [e63: official encoder and MLX image receiving](experiments/e63-vision-integration.md) | image-understanding, conversation-parking |
+| [e64: supported-file image qualification on the PR branch](experiments/e64-vision-review.md) | image-understanding |

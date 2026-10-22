@@ -26,6 +26,7 @@ host memory. A Mac with unified memory does not need that half of it. This engin
   the dense tensors MLX would hold at twice their size stay the file's blocks, which leaves the experts more.
   A long prompt goes through the layers one at a time, so each layer's experts are read once for it.
 - **Strata's line protocol** on stdin and stdout (`strata_mlx/serve.py`).
+- **Opt-in image understanding** with `--vision`, using the official standalone encoder and HTTP server.
 
 ## Measured
 
@@ -224,7 +225,7 @@ The benchmarks in `bench/` tokenize with llama.cpp's `llama-tokenize`, and `benc
 
 ## Not there
 
-Image input, several conversations decoded together, and the files other than Q2_0 and IQ3_S. Conversation
+Image generation, several conversations decoded together, and the files other than Q2_0 and IQ3_S. Conversation
 caches are 16-bit floats (3.9 GB at 128K tokens). Nothing here has run on a Mac with less than 128 GB.
 
 ## License

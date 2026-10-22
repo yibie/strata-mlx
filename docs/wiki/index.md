@@ -31,6 +31,7 @@
 
 ## Reading prompts
 
+- [Image understanding](concepts/image-understanding.md): the encoder's rows at the image tokens, (t, h, w) positions, reuse keyed by the images.
 - [A prompt read in chunks](concepts/prompt-chunk.md): 2,048 tokens through all the layers at a time.
 - [A prompt's experts in tiles](concepts/expert-tiles.md): 16 tokens by 64 rows, from the file's blocks, every type.
 - [The floats kept for prompts](concepts/kept-floats.md): the Q6_K layers made float once, 3.3 GB with IQ3_S.
@@ -72,6 +73,8 @@
 - [e52: letting go of arrays takes their compression off](experiments/e52-shed-compressed.md): one for one, whichever arrays.
 - [e53: the budget following the pressure, off and on](experiments/e53-follow-pressure.md): no swap, answers not faster; stays off.
 - [e54: the fusion limit on an M5 Pro, against a control engine](experiments/e54-shared-weight-controls.md): 6 faster there; `--fusion-limit`.
+- [e63: image receiving, the author's integration](experiments/e63-vision-integration.md): an unsupported file on another branch; historical.
+- [e64: images on this branch with Q2_0](experiments/e64-vision-review.md): 17 of 17 right, two images at 4,442 tokens, past the indexer's 2,048.
 
 Earlier experiments, e01-e42, are in [ROADMAP.md](../../ROADMAP.md) and `bench/experiments/`.
 

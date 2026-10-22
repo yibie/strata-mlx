@@ -108,6 +108,7 @@ class Conversation:
     attn: dict
     mtp_cache: object
     checkpoints: list
+    image_key: tuple | None = None
 
     @property
     def pinned(self) -> bool:
@@ -125,7 +126,7 @@ class Conversation:
         return Conversation(self.tokens[: cp.at], dict(cp.gdn), cp.ple_conv, cp.context,
                             {i: _cut(c, cp.at) for i, c in self.attn.items()},
                             _cut(self.mtp_cache, cp.at) if self.mtp_cache is not None else None,
-                            [c for c in self.checkpoints if c.at <= cp.at])
+                            [c for c in self.checkpoints if c.at <= cp.at], self.image_key)
 
 
 @dataclass
@@ -218,6 +219,8 @@ class Engine:
         self.ple_conv = None
         self.context = mx.full((1, self.m.args.ngram_size - 1), self.eos, dtype=mx.int32)
         self.mtp_cache = self.mtp.make_cache() if self.mtp is not None else None
+        self.image_key = None
+        self.vision = None
         self.tokens = []  # decoded into the state
         self.next_token = None  # decided, not decoded yet
         self.guesses = []
@@ -299,6 +302,17 @@ class Engine:
                     (lambda *a, i=i: self._ffn_block(i, *a)) if paged else mx.compile(lambda *a, i=i: self._ffn_block(i, *a)))
                 for i in range(len(m.layers))}
 
+    @property
+    def rope(self):
+        if self.vision is None:
+            return self.m.rope
+        from .vision import ImageRoPE
+        return ImageRoPE(self.m.rope, self.vision)
+
+    def embed(self, ids, start):
+        return (self.m.embed_tokens(ids) if self.vision is None
+                else self.vision.embed(self.m.embed_tokens, ids, start))
+
     def _forward(self, ids: mx.array, last_only: bool = False):
         """ids (1, T) -> (logits, the window). Attention caches grow by T; nothing else changes.
 
@@ -328,7 +342,7 @@ class Engine:
 
     def _forward_fused(self, ids: mx.array, last_only: bool = False):
         m, T = self.m, ids.shape[1]
-        before = mx.tile(m.embed_tokens(ids), (1, 1, m.hc))
+        before = mx.tile(self.embed(ids, len(self.tokens)), (1, 1, m.hc))
         mask = create_attention_mask(before, next(iter(self.attn.values())))
         nothing = (mx.zeros((1, T, m.args.hidden_size), dtype=before.dtype), mx.zeros((1, T, m.hc), dtype=before.dtype))
         out, inject = nothing
@@ -348,7 +362,7 @@ class Engine:
                 records.append(self._record(i, record, last_only))
             else:
                 x, before, inject = self._hc((i, 0), T)(before, out, inject)
-                out = layer.self_attn(x, m.rope, mask, self.attn[i], self.attn[i].indexer)
+                out = layer.self_attn(x, self.rope, mask, self.attn[i], self.attn[i].indexer)
             before, out, inject = (second(before, out, inject) if compiled
                                    else self._ffn_block(i, before, out, inject))
             if compiled and self.submit_every and not self.paged and (i + 1) % self.submit_every == 0 \
@@ -361,7 +375,7 @@ class Engine:
     def _forward_plain(self, ids: mx.array, last_only: bool = False):
         """The same pass in the model's own operations: the reference the fused one is tested against."""
         m = self.m
-        h = mx.tile(m.embed_tokens(ids), (1, 1, m.hc))
+        h = mx.tile(self.embed(ids, len(self.tokens)), (1, 1, m.hc))
         mask = create_attention_mask(h, next(iter(self.attn.values())))
         records, ple_conv = [], None
         for i, layer in enumerate(m.layers):
@@ -374,7 +388,7 @@ class Engine:
                 x, record = self._gdn(layer.linear_attn, x, self.gdn[i])
                 records.append(self._record(i, record, last_only))
             else:
-                x = layer.self_attn(x, m.rope, mask, self.attn[i], self.attn[i].indexer)
+                x = layer.self_attn(x, self.rope, mask, self.attn[i], self.attn[i].indexer)
             h = self._write(hyper, x, inject)
             x, hyper, inject = layer.mlp_hyper_connection(h)
             h = self._write(hyper, layer.mlp(x), inject)
@@ -468,6 +482,8 @@ class Engine:
 
     def save(self, path: str) -> int:
         """Write the conversation the state holds to `path`, replacing it only once it is whole. Returns its size."""
+        if self.image_key is not None:
+            raise ValueError("image conversations support RAM parking only, not SAVE")
         arrays = {"tokens": mx.array(self.tokens, dtype=mx.int32), **self._small("", self.gdn, self.ple_conv, self.context)}
         caches = {f"attn.{i}": c for i, c in self.attn.items()}
         if self.mtp_cache is not None:
@@ -558,7 +574,7 @@ class Engine:
     def detach(self) -> Conversation:
         """The conversation held, taken out of the engine, which then holds none."""
         conv = Conversation(self.tokens, self.gdn, self.ple_conv, self.context, self.attn, self.mtp_cache,
-                            self.checkpoints)
+                            self.checkpoints, self.image_key)
         self.reset()
         return conv
 
@@ -567,6 +583,7 @@ class Engine:
         self.reset()
         self.tokens, self.gdn, self.ple_conv, self.context = conv.tokens, conv.gdn, conv.ple_conv, conv.context
         self.attn, self.mtp_cache, self.checkpoints = conv.attn, conv.mtp_cache, conv.checkpoints
+        self.image_key = conv.image_key
         if self.lookup:
             self.lookup.extend(self.tokens)
 
@@ -594,7 +611,7 @@ class Engine:
 
     def _cells(self, residual: mx.array, following: mx.array):
         """Add the cells of positions just decoded: their residuals, and the token after each."""
-        return self.mtp(residual, self.m.embed_tokens(following), self.m.rope, self.mtp_cache)
+        return self.mtp(residual, self.embed(following, self.mtp_cache.offset + 1), self.rope, self.mtp_cache)
 
     def _draft(self, residual: mx.array, following: mx.array) -> list:
         """The real cells of the positions just decoded, then guesses for the tokens after the pending one.
@@ -626,7 +643,7 @@ class Engine:
             guesses = []
             for j in range(self.drafts):
                 if j:
-                    x, r = self.mtp(r, m.embed_tokens(guesses[-1]), m.rope, cache)
+                    x, r = self.mtp(r, self.embed(guesses[-1], cache.offset + 1), self.rope, cache)
                 guesses.append(guess(x, j)[0])
             out = mx.concatenate(guesses, axis=1)
             mx.eval(out)
@@ -643,7 +660,7 @@ class Engine:
             batch = []
             for _ in range(first if not made else min(2, self.drafts - made)):
                 if made + len(batch):
-                    x, r = self.mtp(r, m.embed_tokens(g), m.rope, cache)
+                    x, r = self.mtp(r, self.embed(g, cache.offset + 1), self.rope, cache)
                 g, p = guess(x, made + len(batch))
                 batch.append((g, p))
             mx.eval(batch)

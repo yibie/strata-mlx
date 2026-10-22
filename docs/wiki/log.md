@@ -2,6 +2,10 @@
 
 > 中文摘要:知识库的变更记录,最新的在前。每行写日期、jj change ID、改了哪些页、依据什么。
 
+- 2026-10-21 · [ouxxnwtq] · pull request 13 merged ([zpxxwxso]): images, opt-in (`--vision`), a new concept
+  (image-understanding) and two experiments of the author's, renumbered e63 and e64 at the merge (this repository's
+  e62 was in flight): e63 the author's integration with an unsupported file, kept as history; e64 this branch
+  with Q2_0 on the 20-core M5 Pro, 17 of 17 right, two images at 4,442 tokens; conversation-parking.
 - 2026-10-21 · [lqvqmrmr] · e62 and Q3_K held as planes where the dense tensors are blocks (experts from the SSD): a
   pass at the file's bits is 1.3 ms shorter at one token, longer from four; held whole the model keeps 8-bit
   arrays; agreement with llama.cpp 378 of 384; dense-blocks.

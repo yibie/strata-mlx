@@ -65,11 +65,13 @@ class Parked:
     def _counts(self) -> str:
         return f"parked={len(self.entries)} bytes={self.bytes}"
 
-    def best(self, prompt: list):
+    def best(self, prompt: list, image_key=None):
         """The parked conversation that spares `prompt` the most: (its index, tokens, checkpoint as `reach` gives
         it). Of equals the one parked last; (None, 0, None) when none spares anything."""
         found = (None, 0, None)
         for i in reversed(range(len(self.entries))):
+            if getattr(self.entries[i], "image_key", None) != image_key:
+                continue
             n, cp = reach(self.entries[i].tokens, self.entries[i].checkpoints, prompt)
             if n > found[1]:
                 found = (i, n, cp)
@@ -95,7 +97,8 @@ class Parked:
             self.log(f"skipped {n} tokens ({size / MIB:.0f} MiB, the budget is {self.budget / MIB:.0f}); {self._counts()}")
             return False
         # a parked conversation this one continues can do nothing this one cannot
-        older = [c for c in self.entries if not (len(c.tokens) <= n and c.tokens == conv.tokens[: len(c.tokens)])]
+        older = [c for c in self.entries if not (getattr(c, "image_key", None) == getattr(conv, "image_key", None)
+                                               and len(c.tokens) <= n and c.tokens == conv.tokens[: len(c.tokens)])]
         if len(older) < len(self.entries):
             dropped, self.entries = len(self.entries) - len(older), older
             self.log(f"dropped {dropped} superseded conversations; parked={len(self.entries)}")
@@ -109,13 +112,28 @@ class Parked:
         return True
 
 
-def resume(engine, parked: Parked | None, prompt: list) -> int:
+def resume(engine, parked: Parked | None, prompt: list, image_key=None) -> int:
     """`engine.resume(prompt)` with parked conversations to choose from, and the one held parked when the prompt
     leaves it. Returns how many tokens of the prompt need not be read."""
+    if getattr(engine, "image_key", None) != image_key:
+        # Select/take the destination before parking the departing namespace: with room for just one
+        # conversation, parking first could evict the very image conversation being resumed.
+        destination = None
+        if parked is not None and parked.budget > 0:
+            i, there, cp = parked.best(prompt, image_key)
+            if i is not None:
+                destination = parked.take(i) if cp is None else parked.entries[i].prefix(cp)
+        leaving = engine.detach()
+        if parked is not None and parked.budget > 0 and leaving.tokens and not engine.one_shot:
+            parked.park(leaving)
+        if destination is not None:
+            engine.attach(destination)
     if parked is None or parked.budget <= 0:
-        return engine.resume(prompt)
+        n = engine.resume(prompt)
+        engine.image_key = image_key
+        return n
     here, here_cp = reach(engine.tokens, engine.checkpoints, prompt)
-    i, there, there_cp = parked.best(prompt)
+    i, there, there_cp = parked.best(prompt, image_key)
     if there > here:
         t0 = time.perf_counter()
         # a prompt that continues the parked conversation takes it; one that only starts like it takes a copy
@@ -132,7 +150,9 @@ def resume(engine, parked: Parked | None, prompt: list) -> int:
             engine.attach(leaving.prefix(here_cp))
         parked.park(leaving)
     engine.one_shot = False
-    return engine.resume(prompt)
+    n = engine.resume(prompt)
+    engine.image_key = image_key
+    return n
 
 
 def _leaves(engine, here: int, cp) -> bool:

@@ -122,6 +122,23 @@ def test_what_is_too_short_or_too_large_is_not_parked_and_evicts_nothing():
     assert parked.entries == [kept] and parked.evictions == 0
 
 
+def test_short_requests_between_two_turns_take_the_slots_unless_below_the_minimum():
+    # #12: a chat beside an editor or an API client. Slots are given up oldest first whatever their size, so four
+    # short conversations in a row left a long one out; the server's --conversation-cache-min-tokens (256)
+    # keeps them from a slot
+    def conv(tokens, size):
+        return SimpleNamespace(tokens=tokens, bytes=size, checkpoints=[], pinned=False, image_key=None)
+
+    long = conv(SYSTEM + list(range(100, 15_100)), 900 << 20)
+    shorts = [conv(SYSTEM + [TURN, 200 + i, TURN, 50], 1 << 20) for i in range(4)]
+    for minimum, kept in ((0, False), (256, True)):
+        parked = quiet(4096 << 20, slots=4, min_tokens=minimum)
+        parked.park(long)
+        for s in shorts:
+            parked.park(s)
+        assert (long in parked.entries) is kept, (minimum, [len(c.tokens) for c in parked.entries])
+
+
 def test_a_parked_conversation_that_a_new_one_continues_is_dropped():
     parked = quiet()
     parked.park(conv([1, 2]))

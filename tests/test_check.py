@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from strata_mlx import check, dense, paged, serve
-from strata_mlx.check import GB, KNOWN, Model, lines, of, plan
+from strata_mlx.check import DEFAULT_PARKED, GB, KNOWN, Model, lines, of, parking_budget, plan
 from strata_mlx.gguf import Tensor
 
 Q2, IQ3S = KNOWN
@@ -114,6 +114,21 @@ def test_parked_conversations_are_memory_the_model_does_not_have(capsys):
     out = capsys.readouterr().out
     assert out.startswith("A Mac with 64 GB of memory") and "8.0 GB of parked conversations" in out
     assert lines(Q2, 56 * GB)[1] in out and lines(Q2, 64 * GB)[1] not in out
+
+
+def test_conversations_are_parked_by_default_where_the_model_stays_whole_with_its_floats(capsys):
+    # #12: 4 GiB where the model and the floats kept for prompts are held whole with that much less; nothing
+    # where it would come out of the experts', as on a 48 GB Mac with Q2_0 or a 64 GB one with IQ3_S
+    assert parking_budget(Q2, 64 * GB) == DEFAULT_PARKED and parking_budget(Q2, 48 * GB) == 0
+    assert parking_budget(IQ3S, 64 * GB) == 0 and parking_budget(IQ3S, 96 * GB) == DEFAULT_PARKED
+    edge = plan(Q2, 64 * GB).needs + DEFAULT_PARKED  # the smallest Mac that holds Q2_0 whole beside the budget
+    assert parking_budget(Q2, edge) == DEFAULT_PARKED and parking_budget(Q2, edge - GB) == 0
+    assert check.main(["--machine-memory", "64"]) == 0
+    out = capsys.readouterr().out
+    assert "conversations parked in 4.0 GB by default" in out and "no conversations parked by default" in out
+    assert lines(Q2, 60 * GB, 0)[1] in out  # Q2_0 is worked out with the budget taken first
+    assert check.main(["--machine-memory", "64", "--conversation-cache-mib", "0"]) == 0
+    assert "by default" not in capsys.readouterr().out
 
 
 def test_the_launcher_checks_instead_of_serving(monkeypatch, capsys):

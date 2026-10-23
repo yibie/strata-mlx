@@ -19,8 +19,9 @@ host memory. A Mac with unified memory does not need that half of it. This engin
   them. The model decides every token that is written.
 - **Prompts.** Read in chunks, the experts a tile at a time under Apple's matrix product for shaders. A
   conversation is read once: a follow-up reads only what is new, a new chat starts after the system prompt it
-  shares with the last one, and a conversation can be saved and restored. With `--conversation-cache-mib` a
-  conversation that another request interrupts is parked in memory and taken back, not read again.
+  shares with the last one, and a conversation can be saved and restored. A conversation that another request
+  interrupts is parked in memory and taken back, not read again, by default where the model is held whole with
+  4 GiB to spare (`--conversation-cache-mib`).
 - **Long conversations**, measured to 128K tokens of context.
 - **Less memory than the model.** Experts that do not fit are read from the SSD as tokens ask for them, and
   the dense tensors MLX would hold at twice their size stay the file's blocks, which leaves the experts more.
@@ -209,8 +210,10 @@ Options: `--spec 1` (draft head off), `--dtype float32`, `--max-context N`, `--e
 the experts to keep in memory; by default all of them if the machine holds the model; `available` for no more
 than the machine has free or in its file cache when the engine starts, where other programs hold a lot), `--machine-memory GiB`
 (run as a machine of that size would), `--guess-rows off`, `--expert-profile off`,
-`--conversation-cache-mib MiB` (park conversations that other requests interrupt, in that much memory; off by
-default, and the memory is taken from the experts' on a Mac that does not hold the model whole),
+`--conversation-cache-mib MiB` (park conversations that other requests interrupt, in that much memory; by default
+4,096 where the model is held whole with that to spare and 0 where the memory would be taken from the experts', as
+on a Mac that does not hold the model whole; `--conversation-cache-min-tokens`, 256, keeps short requests from
+taking one of its 4 slots),
 `--keep-awake SECONDS` (how long after a request the GPU is kept awake and the arrays wired; 0 for never),
 `--wired off` (keep the GPU awake without wiring the arrays),
 `--follow-pressure on` (where experts are read from the SSD: the experts' budget comes down while macOS compresses

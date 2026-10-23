@@ -46,6 +46,9 @@ By the rule now (`--check`, Q2_0 / IQ3_S, share of the experts in memory) [xukwo
 - A real 32 GB Mac peaked at the experts' budget plus 8.4-8.6 GB of arrays in every run, as the rule counts; what
   it got wrong was what macOS held [#6].
 - The rule does not count the conversation itself: 30 KB a token, about 1 GB for 36,000 tokens.
+- Parked conversations ([[conversation-parking]]) are taken first, 4,096 MiB by default where the model and its
+  floats are still held whole with that much less and nothing elsewhere: on 64 GB Q2_0 gets it (2.1 GB to spare
+  after it) and IQ3_S, paged, does not [xwlsutut] [#12].
 
 ## Superseded
 

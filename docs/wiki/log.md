@@ -2,6 +2,11 @@
 
 > 中文摘要:知识库的变更记录,最新的在前。每行写日期、jj change ID、改了哪些页、依据什么。
 
+- 2026-10-23 · [xwlsutut] · issue 12: conversation parking on by default where the model and its floats are held
+  whole with 4 GiB to spare (`check.parking_budget`, `--conversation-cache-mib auto`), `-min-tokens` 256; found on
+  the CPU that the slots go oldest first whatever their size, so four short requests took a long conversation's.
+  conversation-parking (In this engine, two claims, one superseded, two open questions), memory-rule (one claim);
+  the reporter's M2 Max numbers as theirs [#12].
 - 2026-10-21 · [ouxxnwtq] · pull request 13 merged ([zpxxwxso]): images, opt-in (`--vision`), a new concept
   (image-understanding) and two experiments of the author's, renumbered e63 and e64 at the merge (this repository's
   e62 was in flight): e63 the author's integration with an unsupported file, kept as history; e64 this branch

@@ -31,9 +31,11 @@ Such a machine counts which experts its answers use, in `~/.cache/strata-mlx/exp
 (`--expert-profile <path>` for another place, `off` for none), and starts with the most used ones in memory.
 
 The engine holds one conversation, and a request that shares little with it cuts it back to what they share.
-`--conversation-cache-mib <MiB>` (with `--conversation-cache-slots`, 4, and `--conversation-cache-min-tokens`, 0)
+`--conversation-cache-mib <MiB>` (with `--conversation-cache-slots`, 4, and `--conversation-cache-min-tokens`, 256)
 parks it instead, in that much memory, and takes it back when a prompt continues it (conversations.py); the
-memory is taken from what the experts would have. Off by default. Two keys of a `GEN` line say which checkpoints
+memory is taken from what the experts would have. By default (`auto`) 4,096 MiB where the model is held whole
+with that much to spare, none where it would come out of the experts' (check.parking_budget; a chat page beside
+another client lost its conversation to every request of the other, #12). Two keys of a `GEN` line say which checkpoints
 a request leaves: `ckpt=0`, that no later request continues it, and `pin=<tokens>`, that its first tokens are a
 prefix other requests will start with. These are Strata's, as are the lines the cache writes to the log.
 
@@ -63,6 +65,7 @@ import threading
 import time
 
 from . import bylayer
+from .check import of as model_sizes, parking_budget
 from .conversations import Parked, resume
 from .engine import Engine, Stats, FUSE_UPTO
 from .paged import available_memory, load_profile, machine_memory, save_profile
@@ -309,8 +312,8 @@ def _options(argv: list) -> dict:
     """The arguments this engine knows; the CUDA engine's others (expert cache, K/V placement, ...) are skipped."""
     known = {"--native": None, "--mtp": None, "--spec": "4", "--max-context": "131072", "--dtype": "float16",
              "--prefill": "2048", "--suffix-draft": "auto", "--expert-memory": "auto", "--machine-memory": None,
-             "--expert-profile": "auto", "--guess-rows": "on", "--conversation-cache-mib": "0",
-             "--conversation-cache-slots": "4", "--conversation-cache-min-tokens": "0",
+             "--expert-profile": "auto", "--guess-rows": "on", "--conversation-cache-mib": "auto",
+             "--conversation-cache-slots": "4", "--conversation-cache-min-tokens": "256",
              "--prompt-by-layer": "on", "--read-ahead": "on", "--follow-pressure": "off", "--keep-awake": "600", "--wired": "on",
              "--fusion-limit": "auto"}
     out, skipped, i = dict(known), [], 0
@@ -370,9 +373,20 @@ def main():
     t0 = time.perf_counter()
     dtype = getattr(mx, opts["--dtype"])
     machine = int(float(opts["--machine-memory"]) * 2**30) if opts["--machine-memory"] else machine_memory()
-    # parked conversations are memory the experts cannot have: the machine is that much smaller for them
-    parked = Parked(int(opts["--conversation-cache-mib"]) << 20, int(opts["--conversation-cache-slots"]),
-                    int(opts["--conversation-cache-min-tokens"]))
+    # parked conversations are memory the experts cannot have: the machine is that much smaller for them. By
+    # default 4 GiB where the model is still held whole with that much less, nothing elsewhere (#12)
+    if opts["--conversation-cache-mib"] == "auto":
+        try:
+            budget = parking_budget(model_sizes(opts["--native"]), machine)
+        except OSError:  # the file is not there or not readable: `load` says so below
+            budget = 0
+        print("strata-mlx: " + (f"conversations parked in {budget >> 20} MiB: the model is held whole with that to spare "
+                                "(--conversation-cache-mib 0 for none)" if budget else
+                                "conversations not parked: the memory would come out of the experts' "
+                                "(--conversation-cache-mib 4096 to park anyway)"), file=sys.stderr)
+    else:
+        budget = int(opts["--conversation-cache-mib"]) << 20
+    parked = Parked(budget, int(opts["--conversation-cache-slots"]), int(opts["--conversation-cache-min-tokens"]))
     vision_reserve = (512 << 20) if opts.get("--vision") else 0
     machine -= parked.budget + vision_reserve
     wanted = opts["--expert-memory"]

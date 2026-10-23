@@ -171,6 +171,16 @@ def test_arguments_of_the_other_engine_are_skipped():
     assert (opts["--wired"], opts["--keep-awake"], skipped) == ("off", "0", [])
 
 
+def test_conversations_are_parked_by_default_and_short_requests_get_no_slot():
+    # #12: a chat page beside another client lost its conversation to every request of the other while the cache
+    # was off; `auto` is 4 GiB where the model is held whole with that to spare (check.parking_budget)
+    opts, _ = serve._options([])
+    assert (opts["--conversation-cache-mib"], opts["--conversation-cache-slots"],
+            opts["--conversation-cache-min-tokens"]) == ("auto", "4", "256")
+    opts, skipped = serve._options(["--conversation-cache-mib", "0", "--conversation-cache-min-tokens", "0"])
+    assert (opts["--conversation-cache-mib"], opts["--conversation-cache-min-tokens"], skipped) == ("0", "0", [])
+
+
 def keep_awake(seconds: float, limit: int):
     """A KeepAwake on a clock of its own, and what it did: ("wire", bytes) and "wake"."""
     now, did = [0.0], []

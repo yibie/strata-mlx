@@ -83,7 +83,25 @@ def plan(m: Model, machine: int) -> Plan:
                 machine_for(paged + LEAST))
 
 
-def lines(m: Model, machine: int) -> list:
+DEFAULT_PARKED = 4096 << 20  # of parked conversations, where the model with its floats is held whole without it (#12)
+
+
+def parking_budget(m: Model, machine: int) -> int:
+    """What the engine parks conversations in by default (conversations.py): 4 GiB where the model and the floats
+    kept for prompts are still held whole with that much less, nothing where it would come out of the experts'.
+    So on a 64 GB Mac Q2_0 is parked in and IQ3_S is not. Held whole with 4,096 MiB of parking, Q2_0 did not
+    swap on a 64 GB M5 Pro (#8); a 96 GB M2 Max lost a 40,000-token conversation to every request of another
+    client while parking was off (#12)."""
+    return DEFAULT_PARKED if plan(m, machine - DEFAULT_PARKED).floats else 0
+
+
+def lines(m: Model, machine: int, parked: int | None = None) -> list:
+    """The report's lines for a model on a Mac of `machine` bytes; `parked` is what parked conversations take
+    first, the default's (`parking_budget`) when None, and then the report says what the default is."""
+    default = parked is None
+    if default:
+        parked = parking_budget(m, machine)
+    machine -= parked  # parked conversations are memory the model cannot have
     p, out = plan(m, machine), [f"{m.name}, {m.disk / 1e9:.1f} GB on disk"]
     if p.floats:
         out += [f"  held whole in memory: needs {p.needs / GB:.1f} GB, {(machine - p.needs) / GB:.1f} GB to spare",
@@ -101,13 +119,16 @@ def lines(m: Model, machine: int) -> list:
     else:
         out += [f"  too small: what always stays in memory leaves the experts under {LEAST / GB:.1f} GB;",
                 f"  this file takes a Mac with {p.least / GB:.1f} GB at least"]
+    if default:
+        out.append(f"  conversations parked in {parked / GB:.1f} GB by default (--conversation-cache-mib 0 for none)" if parked
+                   else "  no conversations parked by default: the memory would be the experts' (--conversation-cache-mib 4096 to park anyway)")
     return out
 
 
-def report(models: list, machine: int, this_mac: bool = False, parked: int = 0) -> str:
+def report(models: list, machine: int, this_mac: bool = False, parked: int | None = None) -> str:
     out = [f"{'This Mac has' if this_mac else 'A Mac with'} {machine / GB:g} GB of memory", ""]
     for m in models:
-        out += [*lines(m, machine - parked), ""]  # parked conversations are memory the model cannot have
+        out += [*lines(m, machine, parked), ""]
     out += [f"Counted: {left_to_system(machine) / GB:.1f} GB left to macOS and other programs (a quarter, 8.5 GB at least), {WORKING / GB:.1f} GB of working memory, "
             f"the draft head ({DRAFT_HEAD / GB:.1f} GB)"
             + (f", {parked / GB:.1f} GB of parked conversations (--conversation-cache-mib)." if parked else "."),
@@ -129,9 +150,11 @@ def main(argv: list) -> int:
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--native", help="shard 1 of a GGUF on the disk; without it, the files that have been run")
     p.add_argument("--machine-memory", type=float, help="GB of memory of the Mac to work it out for; without it, this Mac")
-    p.add_argument("--conversation-cache-mib", type=int, default=0, help="the engine's budget for parked conversations")
+    p.add_argument("--conversation-cache-mib", default="auto",
+                   help="the engine's budget for parked conversations; auto (the default) says what the engine would take")
     args, _ = p.parse_known_args(argv)  # the engine's other arguments may stand beside these
     machine = int(args.machine_memory * GB) if args.machine_memory else machine_memory()
+    parked = None if args.conversation_cache_mib == "auto" else int(args.conversation_cache_mib) << 20
     print(report([of(args.native)] if args.native else list(KNOWN), machine, this_mac=not args.machine_memory,
-                 parked=args.conversation_cache_mib << 20))
+                 parked=parked))
     return 0

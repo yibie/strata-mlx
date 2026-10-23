@@ -269,3 +269,29 @@ The count is taken before loading now. By it those three runs give the experts 5
 9.3. In the first run an app was quit soon after the start, so nothing yet says how a machine whose apps hold
 a lot, and go on holding it, does with either figure. It does nothing for a machine that holds the model
 whole.
+
+## 12. One request from another client drops the conversation, and the next turn reads its whole prompt again
+
+[Issue 12 on GitHub](https://github.com/yibie/strata-mlx/issues/12)
+
+**The default changed in `xwlsutut`.** Parking (`--conversation-cache-mib`, ROADMAP) is on by default where the
+model and its floats are held whole with 4 GiB to spare, off where the memory would come out of the experts', and
+`--conversation-cache-min-tokens` is 256, so that short requests take no slot. What follows is the issue as it was
+found, and what is still wrong.
+
+**What is seen.** On a 96 GB M2 Max (macOS 27.0.1, MLX 0.32.3, commit `2f9d1ab`, Q2_0 with the draft head,
+through Strata's server and web page) a web chat with a long document in context read its whole prompt every
+turn: `reading the prompt: 37,231 of 38,313 tokens, 121 s`. Alone, the same conversation reused its state (a
+turn added to 39,940 tokens read 31 tokens, 0.4 s). Measured by @jerry727: with one 11-token request from
+another client between two turns of a 15,013-token conversation, the next turn kept 42 tokens and read 14,987
+again, 43.3 s. Their prompt reads: 358 tok/s at 15,019 tokens, 314 at 39,940.
+
+**What it says.** `2f9d1ab` is from four hours before parking landed (`a807601`); the engine held one
+conversation and any other request cut it back to what they shared. With parking off by default, the answer
+was a flag found by reading the source. And on, the four slots went oldest first whatever their size: four
+short requests from another client between two turns (completions, API calls) took the slots from a long
+conversation, `--conversation-cache-min-tokens` being 0 (`test_conversations.py`).
+
+**Still wrong.** Four or more requests above 256 tokens from other clients between two turns still take the
+slots from a longer conversation; the smallest should leave first. A parked conversation does not outlast a
+restart. And a Mac that reads experts from the SSD parks nothing unless asked: there the budget is the experts'.

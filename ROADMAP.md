@@ -22,8 +22,9 @@
   Now, as Strata does by default: a prompt read from its start is checkpointed where its first message ends
   when that is 2,048 tokens in (the system prompt a client's next chat starts with), that first checkpoint
   stays and the others leave by least recent use, the one before a prompt's last token first; `ckpt=0` on a
-  request says no other continues it and `pin=N` that its first N tokens are a prefix to keep. And, opt-in as
-  in Strata, `--conversation-cache-mib` (with `-slots`, 4, and `-min-tokens`): a conversation a prompt leaves
+  request says no other continues it and `pin=N` that its first N tokens are a prefix to keep. And
+  `--conversation-cache-mib` (with `-slots`, 4, and `-min-tokens`, 256; opt-in as in Strata at first, on by
+  default since issue 12, below): a conversation a prompt leaves
   before its last turn began is parked whole, the oldest leaving when the budget or the slots run out; a prompt
   that continues a parked conversation takes it back, and one that only starts like it goes on from a copy of
   that start. Arrays change hands, nothing is computed: parking and taking back are 0.3 ms.
@@ -49,10 +50,23 @@
   three it keeps the root, a pinned one and the last two, so a chat of 10,194 tokens was still 738 MiB after
   five turns. The budget comes out of the machine's memory before the
   experts' share is worked out, and `--check --conversation-cache-mib` counts it.
+  Issue 12 (jerry727, a 96 GB M2 Max, Q2_0 at `2f9d1ab`, four hours before parking landed): a web chat beside
+  another client, and every turn of a 38,313-token conversation read it again, 121 s; their measurements, a
+  15,019-token prompt read at 358 tok/s and a 39,940-token one at 314, and after one 11-token request from the
+  other client the next turn kept 42 tokens and read 14,987 again in 43.3 s. Off by default, parking was no
+  answer to a user who had not read the source, and on, its four slots went oldest first whatever their size, so
+  four short requests between two turns (an editor's, an API client's) took them from a long conversation
+  (`test_conversations.py` holds the case). So by default now 4,096 MiB where the model and its floats are still
+  held whole with that much less, nothing where it would come out of the experts' (`check.parking_budget`,
+  `--check` says which): on a 64 GB Mac Q2_0 parks and IQ3_S does not; `-min-tokens` is 256. 4,096 MiB on the
+  smallest such machine has one real check, the 64 GB M5 Pro with Q2_0 in issue 8, which did not swap. Through
+  the server every conversation of a benchmark is parked now too (0.3 ms each, up to the budget): the speeds are
+  the same, the footprint is not, and `--conversation-cache-mib 0` is the old one.
   Not done: a parked conversation and the copy of its start that another chat goes on from hold that start's
-  caches twice (83 MB for 2,760 tokens); Strata's floor of free memory below which nothing is parked
-  (`--conversation-cache-min-free-mib`), which wants the same reading of free memory as issue 6; parked
-  conversations on the SSD, so that they outlast a restart (the disk here has 14 GB free).
+  caches twice (83 MB for 2,760 tokens); the smallest slot leaving before the oldest, so that four long
+  requests cannot take a longer conversation's slot either; Strata's floor of free memory below which nothing
+  is parked (`--conversation-cache-min-free-mib`), which wants the same reading of free memory as issue 6;
+  parked conversations on the SSD, so that they outlast a restart (the disk here has 14 GB free).
 - Prompts read in chunks, the output layer for the last token only.
 - Strata's line protocol (`serve.py`, `./strata-mlx`): its server, web app and OpenAI / Anthropic APIs run on this
   engine unchanged.
